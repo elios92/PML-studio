@@ -197,6 +197,9 @@ func wndProc(hwnd syscall.Handle, msg uint32, w, l uintptr) uintptr {
 	case wmAppRefreshMapTree:
 		handleDeferredMapTreeRefresh()
 		return 0
+	case wmAppUpdateResult:
+		handleUpdateResult()
+		return 0
 	case wmNotify:
 		if handled, result := themeButtonNotify(l); handled {
 			return result
@@ -405,7 +408,7 @@ func wndProc(hwnd syscall.Handle, msg uint32, w, l uintptr) uintptr {
 				setToolbarStatus(fmt.Sprintf("Header Map%03d salvato permanentemente.", currentMap.ID))
 			}
 		case idHelpToolbar, idMenuHelpAbout:
-			msgbox("PLM Studio", "PLM Studio 0.5 - editor nativo Windows", MB_OK|MB_ICONINFORMATION)
+			msgbox("PML Studio", "PML Studio "+currentAppVersion()+" - editor nativo Windows", MB_OK|MB_ICONINFORMATION)
 		case idViewMap, idMenuToolsMap:
 			setMode("map")
 		case idViewPermissions, idMenuToolsPermissions:
