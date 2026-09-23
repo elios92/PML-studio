@@ -1,0 +1,64 @@
+name: Windows baseline validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test-build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: source
+    env:
+      GOOS: windows
+      GOARCH: amd64
+      CGO_ENABLED: "0"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: source/go.mod
+          cache: false
+
+      - name: Go version
+        run: go version
+
+      - name: Verify runtime template
+        shell: pwsh
+        run: |
+          $path = "runtime_templates/plm_runtime_core.zip"
+          if (!(Test-Path $path)) { throw "Missing $path" }
+          $size = (Get-Item $path).Length
+          if ($size -ne 30508129) { throw "Unexpected runtime template size: $size" }
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Vet report
+        continue-on-error: true
+        run: go vet ./...
+
+      - name: Build PML Studio
+        run: go build -trimpath -ldflags="-H=windowsgui" -o "../PML Studio.exe" .
+
+      - name: Verify executable
+        shell: pwsh
+        run: |
+          $exe = "..\PML Studio.exe"
+          if (!(Test-Path $exe)) { throw "PML Studio.exe was not generated" }
+          if ((Get-Item $exe).Length -le 0) { throw "PML Studio.exe is empty" }
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: PML-Studio-Windows-x64
+          path: PML Studio.exe
+          if-no-files-found: error
