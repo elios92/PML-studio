@@ -24,8 +24,8 @@ import (
 const (
 	updateRepository = "elios92/PML-studio"
 	updateAPIURL     = "https://api.github.com/repos/" + updateRepository + "/releases/latest"
-	updateExeAsset   = "PML Studio.exe"
-	updateHashAsset  = "PML Studio.exe.sha256"
+	updateExeAsset   = "PML.Studio.exe"
+	updateHashAsset  = "PML.Studio.exe.sha256"
 	wmAppUpdateResult = 0x8004
 )
 
