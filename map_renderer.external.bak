@@ -1,0 +1,611 @@
+//go:build windows
+
+package main
+
+import (
+	"fmt"
+	"syscall"
+	"unsafe"
+)
+
+var (
+	mapScrollX   int
+	mapScrollY   int
+	mapZoomIndex int // 0=1:1, 1=1:2, 2=1:4
+
+	mapRenderCacheTileset *TilesetDescriptor
+	mapCellRenderCache    = make(map[[3]int][]uint32)
+
+	// SetScrollInfo can synchronously change the non-client area and send
+	// WM_SIZE back to the canvas. Guard the update so WM_SIZE cannot
+	// recursively re-enter updateCanvasScrollbars.
+	canvasScrollUpdateInProgress bool
+)
+
+func resetMapRenderCacheForTileset(ts *TilesetDescriptor) {
+	if mapRenderCacheTileset == ts {
+		return
+	}
+	mapRenderCacheTileset = ts
+	mapCellRenderCache = make(map[[3]int][]uint32)
+}
+
+func copyPixels(dst, src []uint32) {
+	copy(dst, src)
+}
+
+func mapCellIDs(x, y int) [3]int {
+	var ids [3]int
+	if currentMapDoc == nil {
+		return ids
+	}
+	for layer := 0; layer < 3 && layer < len(currentMapDoc.Table.Layers); layer++ {
+		ids[layer] = mapTile(layer, x, y)
+	}
+	return ids
+}
+
+func mapDisplayTileSize() int {
+	switch mapZoomIndex {
+	case 1:
+		return 16
+	case 2:
+		return 8
+	default:
+		return 32
+	}
+}
+
+func surfacePixel(s *PixelSurface, x, y int) (uint32, byte, bool) {
+	if s == nil || x < 0 || y < 0 || x >= s.Width || y >= s.Height {
+		return 0, 0, false
+	}
+	i := y*s.Width + x
+	a := byte(255)
+	if len(s.Alpha) == len(s.Pixels) {
+		a = s.Alpha[i]
+	}
+	return s.Pixels[i], a, true
+}
+
+func blendBGR(dst, src uint32, alpha byte) uint32 {
+	if alpha == 255 {
+		return src
+	}
+	if alpha == 0 {
+		return dst
+	}
+	a := uint32(alpha)
+	inv := 255 - a
+	dr, dg, db := (dst>>16)&0xff, (dst>>8)&0xff, dst&0xff
+	sr, sg, sb := (src>>16)&0xff, (src>>8)&0xff, src&0xff
+	r := (sr*a + dr*inv) / 255
+	g := (sg*a + dg*inv) / 255
+	b := (sb*a + db*inv) / 255
+	return r<<16 | g<<8 | b
+}
+
+func composeNormalTile(tileID int, dst []uint32) bool {
+	if currentTileset == nil || currentTileset.Tileset == nil || tileID < 384 || len(dst) < 32*32 {
+		return false
+	}
+	s := currentTileset.Tileset
+	const cols = 8 // RPG Maker XP: tileset standard = 8 colonne da 32 px
+	if s.Width < cols*32 {
+		return false
+	}
+	idx := tileID - 384
+	sx := (idx % cols) * 32
+	sy := (idx / cols) * 32
+	if sx+32 > s.Width || sy+32 > s.Height {
+		return false
+	}
+	for y := 0; y < 32; y++ {
+		for x := 0; x < 32; x++ {
+			c, a, ok := surfacePixel(s, sx+x, sy+y)
+			if !ok {
+				continue
+			}
+			di := y*32 + x
+			dst[di] = blendBGR(dst[di], c, a)
+		}
+	}
+	return true
+}
+
+func composeAutotile(tileID int, dst []uint32) bool {
+	info, ok := autotileRenderParts(tileID)
+	if !ok || info.Surface == nil || len(dst) < 32*32 {
+		return false
+	}
+
+	if info.Simple {
+		for y := 0; y < 32; y++ {
+			for x := 0; x < 32; x++ {
+				c, a, valid := surfacePixel(info.Surface, info.SimpleSrcX+x, info.SimpleSrcY+y)
+				if !valid {
+					continue
+				}
+				di := y*32 + x
+				dst[di] = blendBGR(dst[di], c, a)
+			}
+		}
+		return true
+	}
+
+	for q := 0; q < 4; q++ {
+		part := info.Pattern[q]
+		sx := info.FrameX + (part%6)*16
+		sy := (part / 6) * 16
+		dx := 0
+		dy := 0
+		if q&1 != 0 {
+			dx = 16
+		}
+		if q&2 != 0 {
+			dy = 16
+		}
+		for y := 0; y < 16; y++ {
+			for x := 0; x < 16; x++ {
+				c, a, valid := surfacePixel(info.Surface, sx+x, sy+y)
+				if !valid {
+					continue
+				}
+				di := (dy+y)*32 + dx + x
+				dst[di] = blendBGR(dst[di], c, a)
+			}
+		}
+	}
+	return true
+}
+
+func composeMapCell(x, y int, dst []uint32) {
+	bg := uint32(0x00F4F4F4)
+	if len(dst) < 32*32 {
+		return
+	}
+	if currentMapDoc == nil {
+		for i := range dst {
+			dst[i] = bg
+		}
+		return
+	}
+
+	if mapRenderCacheTileset != currentTileset {
+		resetMapRenderCacheForTileset(currentTileset)
+	}
+	ids := mapCellIDs(x, y)
+	if cached, ok := mapCellRenderCache[ids]; ok {
+		copyPixels(dst, cached)
+		return
+	}
+
+	for i := range dst {
+		dst[i] = bg
+	}
+	for _, id := range ids {
+		switch {
+		case id >= 384:
+			composeNormalTile(id, dst)
+		case id >= 48:
+			composeAutotile(id, dst)
+		}
+	}
+
+	// Molte mappe ripetono le stesse combinazioni di 3 layer centinaia di
+	// volte. Memorizzare il risultato evita di ricomporre 1024 pixel per ogni
+	// cella ad ogni WM_PAINT.
+	if len(mapCellRenderCache) >= 8192 {
+		mapCellRenderCache = make(map[[3]int][]uint32)
+	}
+	buf := make([]uint32, 32*32)
+	copyPixels(buf, dst)
+	mapCellRenderCache[ids] = buf
+}
+
+func stretchTileBuffer(hdc syscall.Handle, px []uint32, x, y, size int32) {
+	if hdc == 0 || len(px) < 1024 || size <= 0 {
+		return
+	}
+	bi := BITMAPINFO{BmiHeader: BITMAPINFOHEADER{
+		BiSize:  uint32(unsafe.Sizeof(BITMAPINFOHEADER{})),
+		BiWidth: 32, BiHeight: -32, BiPlanes: 1, BiBitCount: 32, BiCompression: BI_RGB,
+	}}
+	pStretchDIBits.Call(uintptr(hdc), uintptr(x), uintptr(y), uintptr(size), uintptr(size), 0, 0, 32, 32,
+		uintptr(unsafe.Pointer(&px[0])), uintptr(unsafe.Pointer(&bi)), DIB_RGB_COLORS, SRCCOPY)
+}
+
+func drawSingleTile(hdc syscall.Handle, tileID int, x, y, size int32) {
+	buf := make([]uint32, 32*32)
+	for i := range buf {
+		buf[i] = 0x00F4F4F4
+	}
+	if tileID >= 384 {
+		composeNormalTile(tileID, buf)
+	} else if tileID >= 48 {
+		composeAutotile(tileID, buf)
+	}
+	stretchTileBuffer(hdc, buf, x, y, size)
+}
+
+func updateCanvasScrollbars(hwnd syscall.Handle) {
+	if hwnd == 0 || canvasScrollUpdateInProgress {
+		return
+	}
+
+	canvasScrollUpdateInProgress = true
+	defer func() { canvasScrollUpdateInProgress = false }()
+
+	var r RECT
+	pGetClientRect.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&r)))
+	tile := mapDisplayTileSize()
+	contentW := 0
+	contentH := 0
+	if currentMapDoc != nil {
+		contentW = currentMapW * tile
+		contentH = currentMapH * tile
+	}
+	pageW := int(r.Right - r.Left)
+	pageH := int(r.Bottom - r.Top - gridOriginY)
+	if pageW < 1 {
+		pageW = 1
+	}
+	if pageH < 1 {
+		pageH = 1
+	}
+
+	wantHMin := int32(0)
+	wantHMax := int32(maxInt(contentW-1, 0))
+	wantHPage := uint32(pageW)
+	wantHPos := int32(mapScrollX)
+	maxHPos := wantHMax - int32(wantHPage) + 1
+	if maxHPos < wantHMin {
+		maxHPos = wantHMin
+	}
+	if wantHPos < wantHMin {
+		wantHPos = wantHMin
+	}
+	if wantHPos > maxHPos {
+		wantHPos = maxHPos
+	}
+
+	var curH SCROLLINFO
+	curH.CbSize = uint32(unsafe.Sizeof(SCROLLINFO{}))
+	curH.FMask = SIF_RANGE | SIF_PAGE | SIF_POS
+	pGetScrollInfo.Call(uintptr(hwnd), SB_HORZ, uintptr(unsafe.Pointer(&curH)))
+	if curH.NMin != wantHMin || curH.NMax != wantHMax || curH.NPage != wantHPage || curH.NPos != wantHPos {
+		h := SCROLLINFO{
+			CbSize: uint32(unsafe.Sizeof(SCROLLINFO{})),
+			FMask:  SIF_RANGE | SIF_PAGE | SIF_POS,
+			NMin:   wantHMin,
+			NMax:   wantHMax,
+			NPage:  wantHPage,
+			NPos:   wantHPos,
+		}
+		// redraw=0 is intentional. Updating the scrollbar may change the
+		// non-client area and synchronously send WM_SIZE to this same canvas.
+		pSetScrollInfo.Call(uintptr(hwnd), SB_HORZ, uintptr(unsafe.Pointer(&h)), 0)
+	}
+	mapScrollX = int(wantHPos)
+
+	wantVMin := int32(0)
+	wantVMax := int32(maxInt(contentH-1, 0))
+	wantVPage := uint32(pageH)
+	wantVPos := int32(mapScrollY)
+	maxVPos := wantVMax - int32(wantVPage) + 1
+	if maxVPos < wantVMin {
+		maxVPos = wantVMin
+	}
+	if wantVPos < wantVMin {
+		wantVPos = wantVMin
+	}
+	if wantVPos > maxVPos {
+		wantVPos = maxVPos
+	}
+
+	var curV SCROLLINFO
+	curV.CbSize = uint32(unsafe.Sizeof(SCROLLINFO{}))
+	curV.FMask = SIF_RANGE | SIF_PAGE | SIF_POS
+	pGetScrollInfo.Call(uintptr(hwnd), SB_VERT, uintptr(unsafe.Pointer(&curV)))
+	if curV.NMin != wantVMin || curV.NMax != wantVMax || curV.NPage != wantVPage || curV.NPos != wantVPos {
+		v := SCROLLINFO{
+			CbSize: uint32(unsafe.Sizeof(SCROLLINFO{})),
+			FMask:  SIF_RANGE | SIF_PAGE | SIF_POS,
+			NMin:   wantVMin,
+			NMax:   wantVMax,
+			NPage:  wantVPage,
+			NPos:   wantVPos,
+		}
+		pSetScrollInfo.Call(uintptr(hwnd), SB_VERT, uintptr(unsafe.Pointer(&v)), 0)
+	}
+	mapScrollY = int(wantVPos)
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func handleCanvasScroll(hwnd syscall.Handle, bar int, w uintptr) {
+	var si SCROLLINFO
+	si.CbSize = uint32(unsafe.Sizeof(SCROLLINFO{}))
+	si.FMask = SIF_ALL
+	pGetScrollInfo.Call(uintptr(hwnd), uintptr(bar), uintptr(unsafe.Pointer(&si)))
+	pos := si.NPos
+	code := int(loword(w))
+	line := int32(mapDisplayTileSize())
+	switch code {
+	case SB_LINEUP:
+		pos -= line
+	case SB_LINEDOWN:
+		pos += line
+	case SB_PAGEUP:
+		pos -= int32(si.NPage)
+	case SB_PAGEDOWN:
+		pos += int32(si.NPage)
+	case SB_THUMBTRACK, SB_THUMBPOSITION:
+		pos = si.NTrackPos
+	case SB_TOP:
+		pos = si.NMin
+	case SB_BOTTOM:
+		pos = si.NMax
+	}
+	maxPos := si.NMax - int32(si.NPage) + 1
+	if maxPos < si.NMin {
+		maxPos = si.NMin
+	}
+	if pos < si.NMin {
+		pos = si.NMin
+	}
+	if pos > maxPos {
+		pos = maxPos
+	}
+	si.FMask = SIF_POS
+	si.NPos = pos
+	pSetScrollInfo.Call(uintptr(hwnd), uintptr(bar), uintptr(unsafe.Pointer(&si)), 0)
+	if bar == SB_HORZ {
+		mapScrollX = int(pos)
+	} else {
+		mapScrollY = int(pos)
+	}
+	invalidate(hwnd)
+}
+
+func canvasMapCoord(xpx, ypx int32) (int, int, bool) {
+	tile := mapDisplayTileSize()
+	if tile <= 0 || ypx < gridOriginY {
+		return 0, 0, false
+	}
+	x := (int(xpx) + mapScrollX) / tile
+	y := (int(ypx-gridOriginY) + mapScrollY) / tile
+	if x < 0 || y < 0 || x >= currentMapW || y >= currentMapH {
+		return 0, 0, false
+	}
+	return x, y, true
+}
+
+// currentMapSurface is the already-composited native 32px map image.
+// It is built outside WM_PAINT and reused for every repaint/zoom operation.
+var currentMapSurface *PixelSurface
+
+func mapDocTile(doc *MapDocument, layer, x, y int) int {
+	if doc == nil || layer < 0 || layer >= len(doc.Table.Layers) || y < 0 || y >= doc.Table.Height || x < 0 || x >= doc.Table.Width {
+		return 0
+	}
+	return doc.Table.Layers[layer][y][x]
+}
+
+func composeNormalTileFor(ts *TilesetDescriptor, tileID int, dst []uint32) bool {
+	if ts == nil || ts.Tileset == nil || tileID < 384 || len(dst) < 1024 {
+		return false
+	}
+	s := ts.Tileset
+	if s.Width < 256 {
+		return false
+	}
+	idx := tileID - 384
+	sx := (idx % 8) * 32
+	sy := (idx / 8) * 32
+	if sx+32 > s.Width || sy+32 > s.Height {
+		return false
+	}
+	for y := 0; y < 32; y++ {
+		for x := 0; x < 32; x++ {
+			c, a, ok := surfacePixel(s, sx+x, sy+y)
+			if !ok {
+				continue
+			}
+			di := y*32 + x
+			dst[di] = blendBGR(dst[di], c, a)
+		}
+	}
+	return true
+}
+
+func composeAutotileFor(ts *TilesetDescriptor, tileID int, dst []uint32) bool {
+	if ts == nil || tileID < 48 || tileID >= 384 || len(dst) < 1024 {
+		return false
+	}
+	slot := tileID/48 - 1
+	variant := tileID % 48
+	if slot < 0 || slot >= len(ts.Autotiles) || variant < 0 || variant >= len(xpAutotilePatterns) {
+		return false
+	}
+	s := ts.Autotiles[slot]
+	if s == nil || s.Width <= 0 || s.Height <= 0 {
+		return false
+	}
+	if s.Height == 32 && s.Width >= 32 {
+		for y := 0; y < 32; y++ {
+			for x := 0; x < 32; x++ {
+				c, a, ok := surfacePixel(s, x, y)
+				if ok {
+					di := y*32 + x
+					dst[di] = blendBGR(dst[di], c, a)
+				}
+			}
+		}
+		return true
+	}
+	if s.Width == 32 && s.Height >= 32 {
+		for y := 0; y < 32; y++ {
+			for x := 0; x < 32; x++ {
+				c, a, ok := surfacePixel(s, x, y)
+				if ok {
+					di := y*32 + x
+					dst[di] = blendBGR(dst[di], c, a)
+				}
+			}
+		}
+		return true
+	}
+	if s.Width < 96 || s.Height < 96 {
+		return false
+	}
+	pattern := xpAutotilePatterns[variant]
+	for q := 0; q < 4; q++ {
+		part := pattern[q]
+		sx := (part % 6) * 16
+		sy := (part / 6) * 16
+		dx, dy := 0, 0
+		if q&1 != 0 {
+			dx = 16
+		}
+		if q&2 != 0 {
+			dy = 16
+		}
+		for y := 0; y < 16; y++ {
+			for x := 0; x < 16; x++ {
+				c, a, ok := surfacePixel(s, sx+x, sy+y)
+				if !ok {
+					continue
+				}
+				di := (dy+y)*32 + dx + x
+				dst[di] = blendBGR(dst[di], c, a)
+			}
+		}
+	}
+	return true
+}
+
+func composeMapCellFor(doc *MapDocument, ts *TilesetDescriptor, x, y int, dst []uint32) {
+	const bg = uint32(0x00F4F4F4)
+	for i := range dst {
+		dst[i] = bg
+	}
+	if doc == nil {
+		return
+	}
+	for layer := 0; layer < 3 && layer < len(doc.Table.Layers); layer++ {
+		id := mapDocTile(doc, layer, x, y)
+		if id >= 384 {
+			composeNormalTileFor(ts, id, dst)
+		} else if id >= 48 {
+			composeAutotileFor(ts, id, dst)
+		}
+	}
+}
+
+func buildMapSurface(doc *MapDocument, ts *TilesetDescriptor) (*PixelSurface, error) {
+	done := diagEnterWorker("map render (buildMapSurface)")
+	defer done()
+	if doc == nil || doc.Table.Width <= 0 || doc.Table.Height <= 0 {
+		return nil, fmt.Errorf("mappa non valida")
+	}
+	w := doc.Table.Width * 32
+	h := doc.Table.Height * 32
+	pixels64 := int64(w) * int64(h)
+	if pixels64 <= 0 || pixels64 > 40_000_000 {
+		return nil, fmt.Errorf("mappa troppo grande per la cache grafica: %dx%d", doc.Table.Width, doc.Table.Height)
+	}
+	surf := &PixelSurface{Width: w, Height: h, Pixels: make([]uint32, int(pixels64))}
+	cell := make([]uint32, 1024)
+	cache := make(map[[3]int][]uint32)
+	for my := 0; my < doc.Table.Height; my++ {
+		for mx := 0; mx < doc.Table.Width; mx++ {
+			ids := [3]int{}
+			for l := 0; l < 3 && l < len(doc.Table.Layers); l++ {
+				ids[l] = mapDocTile(doc, l, mx, my)
+			}
+			if c, ok := cache[ids]; ok {
+				copy(cell, c)
+			} else {
+				composeMapCellFor(doc, ts, mx, my, cell)
+				cc := make([]uint32, 1024)
+				copy(cc, cell)
+				cache[ids] = cc
+			}
+			baseX, baseY := mx*32, my*32
+			for row := 0; row < 32; row++ {
+				di := (baseY+row)*w + baseX
+				copy(surf.Pixels[di:di+32], cell[row*32:row*32+32])
+			}
+		}
+	}
+	return surf, nil
+}
+
+func refreshMapSurfaceCell(x, y int) {
+	if currentMapSurface == nil || currentMapDoc == nil || currentTileset == nil || x < 0 || y < 0 || x >= currentMapW || y >= currentMapH {
+		return
+	}
+	cell := make([]uint32, 1024)
+	composeMapCellFor(currentMapDoc, currentTileset, x, y, cell)
+	baseX, baseY := x*32, y*32
+	for row := 0; row < 32; row++ {
+		di := (baseY+row)*currentMapSurface.Width + baseX
+		copy(currentMapSurface.Pixels[di:di+32], cell[row*32:row*32+32])
+	}
+}
+
+func drawMapSurfaceViewport(hdc syscall.Handle, clientW, clientH int) bool {
+	if hdc == 0 || currentMapSurface == nil || clientW <= 0 || clientH <= 0 || len(currentMapSurface.Pixels) == 0 {
+		return false
+	}
+	tile := mapDisplayTileSize()
+	if tile <= 0 {
+		return false
+	}
+
+	// Draw the complete precomposed DIB and let GDI clip it to the canvas.
+	// The previous code cropped the source rectangle (srcX/srcY/srcW/srcH)
+	// while using a top-down DIB. On some GDI paths this produced a successful
+	// paint cycle but no visible pixels. Drawing the full bitmap is simpler,
+	// keeps the one-call fast path and is exactly what the window clipping
+	// region is designed for.
+	dstX := -mapScrollX
+	dstY := int(gridOriginY) - mapScrollY
+	dstW := currentMapSurface.Width * tile / 32
+	dstH := currentMapSurface.Height * tile / 32
+	if dstW <= 0 || dstH <= 0 {
+		return true
+	}
+
+	bi := BITMAPINFO{BmiHeader: BITMAPINFOHEADER{
+		BiSize:        uint32(unsafe.Sizeof(BITMAPINFOHEADER{})),
+		BiWidth:       int32(currentMapSurface.Width),
+		BiHeight:      -int32(currentMapSurface.Height),
+		BiPlanes:      1,
+		BiBitCount:    32,
+		BiCompression: BI_RGB,
+	}}
+
+	r, _, _ := pStretchDIBits.Call(
+		uintptr(hdc),
+		uintptr(int32(dstX)), uintptr(int32(dstY)),
+		uintptr(int32(dstW)), uintptr(int32(dstH)),
+		0, 0,
+		uintptr(int32(currentMapSurface.Width)), uintptr(int32(currentMapSurface.Height)),
+		uintptr(unsafe.Pointer(&currentMapSurface.Pixels[0])),
+		uintptr(unsafe.Pointer(&bi)),
+		DIB_RGB_COLORS,
+		SRCCOPY,
+	)
+	if int32(r) == -1 {
+		diagLogf("[ERROR] StretchDIBits map surface failed map=%v surface=%dx%d dst=(%d,%d %dx%d)", currentMap != nil, currentMapSurface.Width, currentMapSurface.Height, dstX, dstY, dstW, dstH)
+		return false
+	}
+	return true
+}
