@@ -172,11 +172,11 @@ func populateSettingsMenu(menu syscall.Handle) {
 		msgbox("Plugin", "Questa sorgente non contiene un loader di plugin per l'editor.\r\nLe opzioni di caricamento e aggiornamento saranno attivate quando sarà presente.\r\nI plugin del gioco importati sono un sistema distinto.", MB_OK)
 	})
 	g = sub(menu, "Aggiornamenti")
-	item(g, "Versione: 5.01 + impostazioni (build locale)", false, nil)
-	item(g, "Canale: locale, non pubblicato", true, nil)
-	item(g, "Aggiornamento automatico: non disponibile", false, nil)
-	item(g, "Stato GitHub Releases / Updater...", false, func() {
-		msgbox("Aggiornamenti", "Nessun repository ufficiale PML Studio identificato tra quelli accessibili.\r\nPML Updater.exe non è presente nella sorgente.\r\n\r\nPer attivare gli aggiornamenti servono il repository ufficiale, release verificabili e l'updater separato.", MB_OK)
+	item(g, "Versione installata: "+currentAppVersion(), false, nil)
+	item(g, "Canale: GitHub Releases ufficiali", true, nil)
+	item(g, "Controllo automatico all'avvio: attivo", true, nil)
+	item(g, "Controlla aggiornamenti / Aggiorna...", false, func() {
+		beginUpdateCheck(true)
 	})
 
 }
