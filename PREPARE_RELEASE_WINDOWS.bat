@@ -41,16 +41,16 @@ for %%F in ("%EXE%") do if %%~zF LEQ 0 (
 
 if exist "%OUT%" rmdir /s /q "%OUT%"
 mkdir "%OUT%" || goto :fail
-copy /y "%EXE%" "%OUT%\PML Studio.exe" >nul || goto :fail
+copy /y "%EXE%" "%OUT%\PML.Studio.exe" >nul || goto :fail
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$h=(Get-FileHash -LiteralPath '%OUT%\PML Studio.exe' -Algorithm SHA256).Hash.ToLowerInvariant(); Set-Content -LiteralPath '%OUT%\PML Studio.exe.sha256' -Value ($h + '  PML Studio.exe') -Encoding ASCII"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$h=(Get-FileHash -LiteralPath '%OUT%\PML.Studio.exe' -Algorithm SHA256).Hash.ToLowerInvariant(); Set-Content -LiteralPath '%OUT%\PML.Studio.exe.sha256' -Value ($h + '  PML.Studio.exe') -Encoding ASCII"
 if errorlevel 1 (
     echo [FAIL] Impossibile generare SHA-256.
     goto :fail
 )
 
-for /f "tokens=1" %%H in ('powershell -NoProfile -Command "(Get-FileHash -LiteralPath '%OUT%\PML Studio.exe' -Algorithm SHA256).Hash.ToLowerInvariant()"') do set "ACTUAL=%%H"
-for /f "tokens=1" %%H in ('type "%OUT%\PML Studio.exe.sha256"') do set "EXPECTED=%%H"
+for /f "tokens=1" %%H in ('powershell -NoProfile -Command "(Get-FileHash -LiteralPath '%OUT%\PML.Studio.exe' -Algorithm SHA256).Hash.ToLowerInvariant()"') do set "ACTUAL=%%H"
+for /f "tokens=1" %%H in ('type "%OUT%\PML.Studio.exe.sha256"') do set "EXPECTED=%%H"
 if /I not "!ACTUAL!"=="!EXPECTED!" (
     echo [FAIL] Verifica SHA-256 fallita.
     goto :fail
@@ -60,8 +60,8 @@ if /I not "!ACTUAL!"=="!EXPECTED!" (
 >>"%OUT%\RELEASE_INFO.txt" echo.
 >>"%OUT%\RELEASE_INFO.txt" echo GitHub tag: v%VERSION%
 >>"%OUT%\RELEASE_INFO.txt" echo Asset richiesti:
->>"%OUT%\RELEASE_INFO.txt" echo - PML Studio.exe
->>"%OUT%\RELEASE_INFO.txt" echo - PML Studio.exe.sha256
+>>"%OUT%\RELEASE_INFO.txt" echo - PML.Studio.exe
+>>"%OUT%\RELEASE_INFO.txt" echo - PML.Studio.exe.sha256
 >>"%OUT%\RELEASE_INFO.txt" echo.
 >>"%OUT%\RELEASE_INFO.txt" echo SHA-256: !ACTUAL!
 
@@ -71,8 +71,8 @@ echo          RELEASE PRONTA: v%VERSION%
 echo ==========================================
 echo Cartella: "%OUT%"
 echo Asset updater:
-echo   PML Studio.exe
-echo   PML Studio.exe.sha256
+echo   PML.Studio.exe
+echo   PML.Studio.exe.sha256
 echo SHA-256: !ACTUAL!
 echo.
 exit /b 0
