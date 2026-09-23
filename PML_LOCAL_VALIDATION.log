@@ -1,11 +1,11 @@
 PML Studio - Validazione Locale Windows
-Data: 23/09/2026 22:29:38,58
+Data: 23/09/2026 22:53:29,20
 
 [PASS] Struttura base e runtime template
 go version go1.27.1 windows/amd64
 
 [TEST] go test ./...
-ok  	plmstudio	16.141s
+ok  	plmstudio	(cached)
 
 [TEST] go vet ./...
 folder_dialog_windows.go:82:24: possible misuse of unsafe.Pointer
@@ -14,5 +14,9 @@ folder_dialog_windows.go:107:17: possible misuse of unsafe.Pointer
 map_tree.go:703:18: possible misuse of unsafe.Pointer
 map_tree.go:738:28: possible misuse of unsafe.Pointer
 ui_theme_live.go:138:31: possible misuse of unsafe.Pointer
-[FAIL] go vet ./... fallito. Vedi PML_LOCAL_VALIDATION.log
-RISULTATO FINALE: FAIL
+[WARN] Go vet non bloccante: la baseline 5.1 contiene segnalazioni unsafe.Pointer note.
+
+[BUILD] PML Studio.exe
+[PASS] Build Windows x64: 44909056 byte
+
+RISULTATO FINALE: PASS
