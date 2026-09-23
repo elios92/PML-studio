@@ -9,6 +9,9 @@ import (
 )
 
 func main() {
+	if runUpdateHelperFromArgs() {
+		return
+	}
 	// Win32 windows, their message queue and COM apartment belong to one
 	// OS thread. Go must not move this goroutine between native threads.
 	runtime.LockOSThread()
@@ -89,6 +92,9 @@ func main() {
 	layout(hwndMain)
 	pShowWindow.Call(uintptr(hwndMain), SW_SHOW)
 	pUpdateWindow.Call(uintptr(hwndMain))
+
+	// Il controllo release e asincrono: non deve mai bloccare il thread Win32.
+	beginAutomaticUpdateCheck()
 
 	configureEditorAutosave()
 	switch settings.Startup {
