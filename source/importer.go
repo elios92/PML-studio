@@ -972,12 +972,15 @@ func extractScriptsRXData(src, dstDir, mode string) (scriptExtractionSummary, er
 		}
 		zr, err := zlib.NewReader(bytes.NewReader([]byte(compressed)))
 		if err != nil {
-			continue
+			return summary, fmt.Errorf("script %d %q: stream zlib non valido: %w", i+1, originalName, err)
 		}
 		body, readErr := io.ReadAll(zr)
-		_ = zr.Close()
+		closeErr := zr.Close()
 		if readErr != nil {
-			continue
+			return summary, fmt.Errorf("script %d %q: lettura zlib fallita: %w", i+1, originalName, readErr)
+		}
+		if closeErr != nil {
+			return summary, fmt.Errorf("script %d %q: chiusura zlib fallita: %w", i+1, originalName, closeErr)
 		}
 		hash := sha256HexBytes(body)
 		classification := "structural"
