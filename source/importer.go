@@ -1298,11 +1298,31 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 			percent += (genericDone * 8) / genericTotal
 		}
 		emitEssentialsImportProgress(progress, percent, "Conversione database Essentials", name+".rxdata")
-		if err := convertRXDataToJSON(src, filepath.Join(convertedData, name+".json")); err != nil {
-			report.Warnings = append(report.Warnings, fmt.Sprintf("%s.rxdata: %v", name, err))
-			continue
+		target := filepath.Join(convertedData, name+".json")
+		if err := convertRXDataToJSON(src, target); err != nil {
+			// System, CommonEvents and Tilesets are mandatory runtime inputs. A
+			// failed conversion here must stop immediately; treating it as a
+			// warning only postponed the failure until final validation and left
+			// a project that looked almost complete but could never run.
+			switch name {
+			case "System", "CommonEvents", "Tilesets":
+				return nil, fmt.Errorf("conversione %s.rxdata obbligatoria: %w", name, err)
+			default:
+				report.Warnings = append(report.Warnings, fmt.Sprintf("%s.rxdata: %v", name, err))
+				continue
+			}
 		}
 		report.DataFilesConverted++
+		// Keep the historical canonical root files consumed by the editor/runtime.
+		// Generic converted data lives under converted/data, but these three files
+		// are part of the public PLM project contract and final validation expects
+		// them at converted/<Name>.json.
+		switch name {
+		case "System", "CommonEvents", "Tilesets":
+			if err := copyFileAtomic(target, filepath.Join(dest, "converted", name+".json")); err != nil {
+				return nil, fmt.Errorf("pubblicazione %s.json canonico: %w", name, err)
+			}
+		}
 	}
 
 	// Preserve the exact compiled script archive as immutable conversion evidence.
