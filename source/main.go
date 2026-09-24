@@ -9,6 +9,9 @@ import (
 )
 
 func main() {
+	if runEmbeddedGameHost() {
+		return
+	}
 	if runUpdateHelperFromArgs() {
 		return
 	}
