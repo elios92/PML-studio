@@ -103,18 +103,31 @@ func runEmbeddedGameHost() bool {
 	// reach Python as a backslash followed by 'n' and trigger
 	// "unexpected character after line continuation character".
 	script := fmt.Sprintf("import sys\nsys.argv = %s\n", string(argsJSON))
+	// Always wrap the Python entry point so GUI builds preserve the complete
+	// traceback in runtime_error.log. Without a console, PyRun_SimpleString would
+	// otherwise print the useful exception to nowhere and only the generic host
+	// dialog would remain.
+	body := ""
 	if os.Getenv("PLM_MAP_INDEX") != "" {
-		// Playtest of projects organized in physical region folders uses the
-		// same non-destructive resolver previously injected through python -c.
-		script += playtestMapResolverBootstrap()
+		body = playtestMapResolverBootstrap()
 	} else {
-		script += fmt.Sprintf(
+		body = fmt.Sprintf(
 			"import os, runpy\n"+
 				"os.chdir(%q)\n"+
 				"runpy.run_path(%q, run_name='__main__')\n",
 			filepath.ToSlash(root), filepath.ToSlash(mainPy),
 		)
 	}
+	script += "import traceback\ntry:\n"
+	for _, line := range strings.Split(body, "\n") {
+		if line != "" {
+			script += "    " + line + "\n"
+		}
+	}
+	script += "except BaseException:\n" +
+		"    _plm_tb = traceback.format_exc()\n" +
+		"    open('runtime_error.log', 'w', encoding='utf-8').write(_plm_tb)\n" +
+		"    raise\n"
 	cscript := append([]byte(script), 0)
 	r, _, _ := run.Call(uintptr(unsafe.Pointer(&cscript[0])))
 	// PyRun_SimpleString returns -1 when Python raised an exception. Do not
@@ -122,7 +135,15 @@ func runEmbeddedGameHost() bool {
 	// non-zero status unrelated to a successful game shutdown and previously
 	// produced a misleading generic error after the window had already run.
 	if int32(r) != 0 {
-		failGameLauncher("Il runtime Python del progetto ha generato un errore. Avvia l'EXE DEBUG o consulta il log runtime per i dettagli.")
+		detail := ""
+		if b, readErr := os.ReadFile(filepath.Join(root, "runtime_error.log")); readErr == nil {
+			lines := strings.Split(strings.TrimSpace(string(b)), "\n")
+			if len(lines) > 8 {
+				lines = lines[len(lines)-8:]
+			}
+			detail = "\n\n" + strings.Join(lines, "\n")
+		}
+		failGameLauncher("Il runtime Python del progetto ha generato un errore." + detail)
 	}
 	finalize.Call()
 	return true
