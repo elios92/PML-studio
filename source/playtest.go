@@ -261,7 +261,12 @@ func startPlaytest() error {
 	}
 	savePermissions()
 	if err := verifySavedPermissionData(); err != nil {
-		return fmt.Errorf("verifica Movimenti/Terrain Tags nella mappa reale: %w", err)
+		// Imported Essentials maps can legitimately predate PLM's editor sidecar
+		// movement_permissions. Their authoritative collision/terrain data lives
+		// in the converted RPG::Tileset passages/terrain_tags arrays. Do not block
+		// Playtest merely because an editor-only sidecar has not been authored yet.
+		diagLogf("[PLAYTEST][PERMISSIONS WARNING] %v", err)
+		setText(hwndStatus, "Playtest: Movimenti/Terrain Tags sidecar assente; uso dati tileset importati...")
 	}
 	if err := saveEvents(); err != nil {
 		return fmt.Errorf("salvataggio eventi: %w", err)
