@@ -1325,6 +1325,19 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 		}
 	}
 
+	// Build the runtime/editor tileset contract from the original RGSS
+	// Tilesets.rxdata. The generic JSON above is diagnostic only; map rendering
+	// consumes converted/tilesets/<id>.json plus the numeric aliases generated in
+	// assets/Graphics/Tilesets and assets/Graphics/Autotiles.
+	tilesetsRX := filepath.Join(source, "Data", "Tilesets.rxdata")
+	if !exists(tilesetsRX) {
+		return nil, fmt.Errorf("Data\\Tilesets.rxdata mancante: impossibile costruire tileset/autotile runtime")
+	}
+	emitEssentialsImportProgress(progress, 76, "Preparazione tileset/autotile", "Creazione metadati e alias grafici...")
+	if _, _, err := convertTilesetsForRuntime(tilesetsRX, dest); err != nil {
+		return nil, fmt.Errorf("conversione tileset/autotile runtime: %w", err)
+	}
+
 	// Preserve the exact compiled script archive as immutable conversion evidence.
 	// Extracted .rb files are useful for analysis/migration, but the original
 	// Scripts.rxdata is the authoritative record for ordering, removals and every
