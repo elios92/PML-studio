@@ -12,12 +12,7 @@ import (
 	"unsafe"
 )
 
-var (
-	kernel32 = syscall.NewLazyDLL("kernel32.dll")
-	user32Game = syscall.NewLazyDLL("user32.dll")
-	procSetDllDirectoryW = kernel32.NewProc("SetDllDirectoryW")
-	procMessageBoxGameW = user32Game.NewProc("MessageBoxW")
-)
+var procSetDllDirectoryW = kernel32.NewProc("SetDllDirectoryW")
 
 func utf16Ptr(s string) *uint16 {
 	p, _ := syscall.UTF16PtrFromString(s)
@@ -25,7 +20,7 @@ func utf16Ptr(s string) *uint16 {
 }
 
 func failGameLauncher(message string) {
-	procMessageBoxGameW.Call(
+	pMessageBoxW.Call(
 		0,
 		uintptr(unsafe.Pointer(utf16Ptr(message))),
 		uintptr(unsafe.Pointer(utf16Ptr("PML Runtime"))),
