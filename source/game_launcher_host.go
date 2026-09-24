@@ -98,13 +98,19 @@ func runEmbeddedGameHost() bool {
 		}
 	}
 	argsJSON, _ := json.Marshal(args)
-	script := fmt.Sprintf(
-		"import os, sys, runpy\n"+
-			"sys.argv = %s\n"+
-			"os.chdir(%q)\n"+
-			"runpy.run_path(%q, run_name='__main__')\n",
-		string(argsJSON), filepath.ToSlash(root), filepath.ToSlash(mainPy),
-	)
+	script := fmt.Sprintf("import sys\\nsys.argv = %s\\n", string(argsJSON))
+	if os.Getenv("PLM_MAP_INDEX") != "" {
+		// Playtest of projects organized in physical region folders uses the
+		// same non-destructive resolver previously injected through python -c.
+		script += playtestMapResolverBootstrap()
+	} else {
+		script += fmt.Sprintf(
+			"import os, runpy\\n"+
+				"os.chdir(%q)\\n"+
+				"runpy.run_path(%q, run_name='__main__')\\n",
+			filepath.ToSlash(root), filepath.ToSlash(mainPy),
+		)
+	}
 	cscript := append([]byte(script), 0)
 	r, _, _ := run.Call(uintptr(unsafe.Pointer(&cscript[0])))
 	exitCode, _, _ := finalize.Call()
