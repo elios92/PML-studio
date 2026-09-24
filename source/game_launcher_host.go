@@ -117,9 +117,13 @@ func runEmbeddedGameHost() bool {
 	}
 	cscript := append([]byte(script), 0)
 	r, _, _ := run.Call(uintptr(unsafe.Pointer(&cscript[0])))
-	exitCode, _, _ := finalize.Call()
-	if r != 0 || exitCode != 0 {
-		failGameLauncher("Il runtime Python del progetto si e' chiuso con un errore.")
+	// PyRun_SimpleString returns -1 when Python raised an exception. Do not
+	// immediately finalize the interpreter: Py_FinalizeEx can itself report a
+	// non-zero status unrelated to a successful game shutdown and previously
+	// produced a misleading generic error after the window had already run.
+	if int32(r) != 0 {
+		failGameLauncher("Il runtime Python del progetto ha generato un errore. Avvia l'EXE DEBUG o consulta il log runtime per i dettagli.")
 	}
+	finalize.Call()
 	return true
 }
