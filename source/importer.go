@@ -1338,6 +1338,14 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 		return nil, fmt.Errorf("conversione tileset/autotile runtime: %w", err)
 	}
 
+	// Battle settings are canonical PLM project data. Essentials v20.1 does
+	// not provide this PLM-specific file, therefore a clean import starts from
+	// the documented defaults. Runtime installation later wires these settings
+	// to the actual Python consumer.
+	if err := saveBattleSettings(dest, defaultBattleSettings()); err != nil {
+		return nil, fmt.Errorf("inizializzazione impostazioni lotta PML: %w", err)
+	}
+
 	// Connections are mandatory project data even when the source project has
 	// zero connections. Always publish the canonical document so editor/runtime
 	// and final validation see the same source of truth.
