@@ -450,8 +450,25 @@ func validateConvertedEssentialsProject(source, dest string, report *EssentialsI
 	}
 
 	if exists(filepath.Join(source, "Data", "messages.dat")) {
-		if !exists(filepath.Join(dest, "converted", "messages.json")) {
-			return fmt.Errorf("Data/messages.dat presente nella sorgente ma converted/messages.json non generato")
+		messagesPath := filepath.Join(dest, "converted", "messages.json")
+		info, statErr := os.Stat(messagesPath)
+		if statErr != nil || info.IsDir() || info.Size() == 0 {
+			return fmt.Errorf("Data/messages.dat presente nella sorgente ma converted/messages.json non generato o vuoto")
+		}
+		var messagesPayload struct {
+			Format       string `json:"format"`
+			Source       string `json:"source"`
+			MessageTypes []any  `json:"message_types"`
+		}
+		data, readErr := os.ReadFile(messagesPath)
+		if readErr != nil {
+			return fmt.Errorf("lettura converted/messages.json: %w", readErr)
+		}
+		if err := json.Unmarshal(data, &messagesPayload); err != nil {
+			return fmt.Errorf("converted/messages.json non valido: %w", err)
+		}
+		if messagesPayload.Format != "pokemon-essentials-v20.1-messages" || messagesPayload.Source != "messages.dat" || messagesPayload.MessageTypes == nil {
+			return fmt.Errorf("converted/messages.json non rispetta il contratto runtime Essentials v20.1")
 		}
 	}
 	if err := validateConvertedMapTilesets(dest, convertedMaps); err != nil {
