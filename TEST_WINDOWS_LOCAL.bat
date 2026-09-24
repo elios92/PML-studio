@@ -7,8 +7,6 @@ cd /d "%~dp0"
 set "LOG=%~dp0PML_LOCAL_VALIDATION.log"
 set "BUILD_DIR=%~dp0.build-validation"
 set "EXE=%BUILD_DIR%\PML Studio.exe"
-set "TEST_OUT=%~dp0test-build"
-set "TEST_EXE=%TEST_OUT%\PML Studio.exe"
 set "SRC=%~dp0source"
 set "RUNTIME=%SRC%\runtime_templates\plm_runtime_core.zip"
 set "EXPECTED_RUNTIME_SIZE=30508129"
@@ -112,28 +110,7 @@ if "!EXE_SIZE!"=="0" (
 echo [PASS] Build Windows x64: !EXE_SIZE! byte
 >>"%LOG%" echo [PASS] Build Windows x64: !EXE_SIZE! byte
 
-rem Keep the exact validated binary as the explicit conversion test build.
-rem The old validator deleted its freshly compiled EXE, so an older PML Studio.exe
-rem could accidentally be used for conversion tests.
-if exist "%TEST_OUT%" rmdir /s /q "%TEST_OUT%"
-mkdir "%TEST_OUT%"
-if errorlevel 1 (
-    call :fail "Impossibile creare la cartella test-build."
-    goto :end
-)
-copy /y "%EXE%" "%TEST_EXE%" >nul
-if errorlevel 1 (
-    call :fail "Impossibile pubblicare la build validata in test-build."
-    goto :end
-)
-for %%F in ("%TEST_EXE%") do set "TEST_EXE_SIZE=%%~zF"
-if "!TEST_EXE_SIZE!"=="0" (
-    call :fail "La build di test pubblicata e' vuota."
-    goto :end
-)
 rmdir /s /q "%BUILD_DIR%" >nul 2>nul
-echo [PASS] Build di test pronta: test-build\PML Studio.exe
->>"%LOG%" echo [PASS] Build di test pronta: test-build\PML Studio.exe
 
 echo.
 echo ==========================================
@@ -141,10 +118,6 @@ echo        VALIDAZIONE COMPLETATA: PASS
 echo ==========================================
 >>"%LOG%" echo.
 >>"%LOG%" echo RISULTATO FINALE: PASS
-echo.
-echo AVVIA QUESTA BUILD PER IL TEST DI CONVERSIONE:
-echo "%TEST_EXE%"
->>"%LOG%" echo BUILD DA TESTARE: %TEST_EXE%
 set "RESULT=0"
 goto :end
 
