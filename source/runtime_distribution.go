@@ -50,6 +50,16 @@ type runtimeInstallManifest struct {
 
 func safeGameExecutableBaseName(name string) string {
 	name = strings.TrimSpace(name)
+	// Keep Windows executable filenames ASCII-stable. In particular, normalize
+	// Pokemon spellings with accented/corrupted e (Pokémon/Pokèmon/Pok�mon)
+	// to "Pokemon" so Explorer, scripts and launch manifests do not display
+	// mojibake or inconsistent filenames.
+	replacer := strings.NewReplacer(
+		"Pokémon", "Pokemon", "POKÉMON", "POKEMON", "pokémon", "pokemon",
+		"Pokèmon", "Pokemon", "POKÈMON", "POKEMON", "pokèmon", "pokemon",
+		"Pok�mon", "Pokemon", "POK�MON", "POKEMON", "pok�mon", "pokemon",
+	)
+	name = replacer.Replace(name)
 	if name == "" {
 		name = "Pokemon Game"
 	}
