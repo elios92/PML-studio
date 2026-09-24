@@ -1,0 +1,10 @@
+PML Studio v0.5.3
+
+GitHub tag: v0.5.3
+Asset richiesti:
+- PML.Studio.exe
+- PML.Studio.exe.sha256
+
+SHA-256: 3d4801110630b30d9e8335922bdae9497a766bd0db57b4244a2c6aa67aed11df
+Source version file: 0.5.3
+Release directory: v0.5.3
