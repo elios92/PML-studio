@@ -442,6 +442,22 @@ func validateConvertedEssentialsProject(source, dest string, report *EssentialsI
 		if !exists(index) || report.RubyScriptsExtracted == 0 {
 			return fmt.Errorf("Scripts.rxdata non estratto correttamente")
 		}
+		// The original compiled archive is authoritative conversion evidence.
+		// Validate it byte-for-byte so extraction/classification can never hide a
+		// dropped, reordered or modified script.
+		sourceScripts := filepath.Join(source, "Data", "Scripts.rxdata")
+		preservedScripts := filepath.Join(dest, "converted", "source_compiled_data", "Scripts.rxdata")
+		sourceHash, err := sha256HexFile(sourceScripts)
+		if err != nil {
+			return fmt.Errorf("hash Scripts.rxdata sorgente: %w", err)
+		}
+		preservedHash, err := sha256HexFile(preservedScripts)
+		if err != nil {
+			return fmt.Errorf("Scripts.rxdata originale non preservato: %w", err)
+		}
+		if !strings.EqualFold(sourceHash, preservedHash) {
+			return fmt.Errorf("Scripts.rxdata preservato diverso dalla sorgente")
+		}
 	}
 	if exists(filepath.Join(source, "Data", "PluginScripts.rxdata")) {
 		if !exists(filepath.Join(dest, "converted", "plugin_scripts_ruby", "index.json")) {
