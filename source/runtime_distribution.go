@@ -255,20 +255,21 @@ func validateLauncherExecution(dest string) error {
 	if err := json.Unmarshal(manifestData, &manifest); err != nil {
 		return fmt.Errorf("manifest runtime non valido: %w", err)
 	}
-	// Never allow a launcher probe to freeze the conversion at 99%. The embedded
-	// launcher is expected to honor PLM_TEST_MODE and terminate immediately; if
-	// it does not, that is a launcher contract failure, not a reason to block the
-	// editor UI forever.
+	// Probe the complete launcher -> bundled Python -> main.py chain without
+	// entering the game loop. The launcher forwards command-line arguments, and
+	// main.py handles --help in argparse before pygame/scene initialization.
+	// PLM_TEST_MODE is kept as an additional signal for launcher versions that
+	// support it, but --help is the deterministic termination contract.
 	for _, exe := range []string{manifest.ReleaseEXE, manifest.DebugEXE} {
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		cmd := exec.CommandContext(ctx, filepath.Join(dest, exe))
+		cmd := exec.CommandContext(ctx, filepath.Join(dest, exe), "--help")
 		cmd.Dir = dest
 		cmd.Env = append(os.Environ(), "PLM_TEST_MODE=1", "PYTHONUTF8=1")
 		output, runErr := cmd.CombinedOutput()
 		timedOut := ctx.Err() == context.DeadlineExceeded
 		cancel()
 		if timedOut {
-			return fmt.Errorf("launcher %s non termina in PLM_TEST_MODE entro 15 secondi", exe)
+			return fmt.Errorf("launcher %s non termina il probe --help entro 15 secondi", exe)
 		}
 		if runErr != nil {
 			text := strings.TrimSpace(string(output))
