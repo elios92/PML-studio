@@ -440,6 +440,9 @@ func validateConvertedEssentialsProject(source, dest string, report *EssentialsI
 		filepath.Join("converted", "Tilesets.json"),
 		filepath.Join("converted", "map_connections.json"),
 		filepath.Join("converted", "battle_settings.json"),
+		filepath.Join("converted", "data", "plm_mechanics.json"),
+		filepath.Join("converted", "asset_aliases.json"),
+		filepath.Join("converted", "source_essentials", "manifest.json"),
 		filepath.Join("game", "plm_battle_settings.py"),
 	}
 	for _, rel := range requiredConverted {
