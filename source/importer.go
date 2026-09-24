@@ -1300,17 +1300,10 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 		emitEssentialsImportProgress(progress, percent, "Conversione database Essentials", name+".rxdata")
 		target := filepath.Join(convertedData, name+".json")
 		if err := convertRXDataToJSON(src, target); err != nil {
-			// System, CommonEvents and Tilesets are mandatory runtime inputs. A
-			// failed conversion here must stop immediately; treating it as a
-			// warning only postponed the failure until final validation and left
-			// a project that looked almost complete but could never run.
-			switch name {
-			case "System", "CommonEvents", "Tilesets":
-				return nil, fmt.Errorf("conversione %s.rxdata obbligatoria: %w", name, err)
-			default:
-				report.Warnings = append(report.Warnings, fmt.Sprintf("%s.rxdata: %v", name, err))
-				continue
-			}
+			// Existing standard RPG Maker/Essentials Data is authoritative project
+			// state. Never silently drop a database and continue with a project that
+			// only looks converted.
+			return nil, fmt.Errorf("conversione %s.rxdata: %w", name, err)
 		}
 		report.DataFilesConverted++
 		// Keep the historical canonical root files consumed by the editor/runtime.
@@ -1395,13 +1388,12 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 		emitEssentialsImportProgress(progress, 77, "Estrazione script Ruby", "Scripts.rxdata")
 		sum, err := extractScriptsRXData(scripts, filepath.Join(dest, "converted", "scripts_ruby"), "core")
 		if err != nil {
-			report.Warnings = append(report.Warnings, "Scripts.rxdata: "+err.Error())
-		} else {
-			report.RubyScriptsExtracted = sum.Total
-			report.CoreScriptsMatched = sum.Matched
-			report.CoreScriptsModified = sum.Modified
-			report.CustomScripts = sum.Custom
+			return nil, fmt.Errorf("estrazione Scripts.rxdata: %w", err)
 		}
+		report.RubyScriptsExtracted = sum.Total
+		report.CoreScriptsMatched = sum.Matched
+		report.CoreScriptsModified = sum.Modified
+		report.CustomScripts = sum.Custom
 	}
 
 	// Persist the imported mechanics generation as a PLM project setting.
@@ -1419,10 +1411,9 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 		emitEssentialsImportProgress(progress, 83, "Estrazione PluginScripts", "PluginScripts.rxdata")
 		sum, err := extractScriptsRXData(plugins, filepath.Join(dest, "converted", "plugin_scripts_ruby"), "plugin")
 		if err != nil {
-			report.Warnings = append(report.Warnings, "PluginScripts.rxdata: "+err.Error())
-		} else {
-			report.PluginScriptsExtracted = sum.Total
+			return nil, fmt.Errorf("estrazione PluginScripts.rxdata: %w", err)
 		}
+		report.PluginScriptsExtracted = sum.Total
 	}
 
 	// Unknown/custom .rxdata created by plugins are not discarded. Try to decode
@@ -1495,6 +1486,18 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 		}
 	}
 
+	// Preserve the complete original Data tree only after its functional
+	// conversion has succeeded. This is the immutable 1:1 audit snapshot used by
+	// final validation; it is not a runtime fallback.
+	emitEssentialsImportProgress(progress, 93, "Verifica e snapshot Data", "Conservazione sorgente Essentials 1:1...")
+	preservedCount, preserveErr := preserveEssentialsSourceData(source, dest)
+	if preserveErr != nil {
+		return nil, fmt.Errorf("snapshot sorgente Essentials: %w", preserveErr)
+	}
+	if preservedCount == 0 {
+		return nil, fmt.Errorf("snapshot sorgente Essentials vuoto")
+	}
+
 	// Preserve source configuration separately for diagnostics, never as runtime
 	// dependencies of the converted Python project.
 	emitEssentialsImportProgress(progress, 94, "Configurazione sorgente", "Game.ini / Game.rxproj / mkxp.json")
@@ -1545,9 +1548,9 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 	if _, _, err := installRuntimeCore(dest, report.ProjectName); err != nil {
 		return nil, fmt.Errorf("installazione runtime PLM: %w", err)
 	}
-	if err := writePythonBootstrap(dest, report.ProjectName); err != nil {
-		return nil, err
-	}
+	// installRuntimeCore owns main.py. Do not replace it with the legacy
+	// diagnostic bootstrap: doing so discards the actual game entry point after
+	// a successful runtime installation.
 	emitEssentialsImportProgress(progress, 99, "Validazione progetto convertito", "Runtime, launcher, mappe e dati 1:1...")
 	if err := validateConvertedEssentialsProject(source, dest, report); err != nil {
 		return nil, fmt.Errorf("validazione conversione PLM: %w", err)
