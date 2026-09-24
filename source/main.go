@@ -12,6 +12,7 @@ func main() {
 	if runUpdateHelperFromArgs() {
 		return
 	}
+	go cleanupUpdateArtifacts()
 	// Win32 windows, their message queue and COM apartment belong to one
 	// OS thread. Go must not move this goroutine between native threads.
 	runtime.LockOSThread()
