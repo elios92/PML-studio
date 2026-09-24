@@ -1305,6 +1305,17 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 		report.DataFilesConverted++
 	}
 
+	// Preserve the exact compiled script archive as immutable conversion evidence.
+	// Extracted .rb files are useful for analysis/migration, but the original
+	// Scripts.rxdata is the authoritative record for ordering, removals and every
+	// user modification made in RPG Maker XP.
+	if scripts := filepath.Join(source, "Data", "Scripts.rxdata"); exists(scripts) {
+		preservedScripts := filepath.Join(dest, "converted", "source_compiled_data", "Scripts.rxdata")
+		if err := copyFileAtomic(scripts, preservedScripts); err != nil {
+			return nil, fmt.Errorf("conservazione Scripts.rxdata originale: %w", err)
+		}
+	}
+
 	// Extract the actual project Scripts.rxdata and classify each script against
 	// the untouched v20.1 reference instead of assuming all source scripts are core.
 	if scripts := filepath.Join(source, "Data", "Scripts.rxdata"); exists(scripts) {
