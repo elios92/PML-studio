@@ -1451,8 +1451,19 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 	if err := writeJSON(filepath.Join(dest, "converted", "essentials_profile.json"), analysis); err != nil {
 		return nil, err
 	}
+	// Install the project-agnostic PLM runtime only after all converted data/assets
+	// have been generated. A successful conversion must be immediately runnable
+	// and must expose both the normal launcher and the DEBUG launcher.
+	emitEssentialsImportProgress(progress, 97, "Installazione runtime Python", "Creazione launcher Release e DEBUG...")
+	if _, _, err := installRuntimeCore(dest, report.ProjectName); err != nil {
+		return nil, fmt.Errorf("installazione runtime PLM: %w", err)
+	}
 	if err := writePythonBootstrap(dest, report.ProjectName); err != nil {
 		return nil, err
+	}
+	emitEssentialsImportProgress(progress, 99, "Validazione progetto convertito", "Runtime, launcher, mappe e dati 1:1...")
+	if err := validateConvertedEssentialsProject(source, dest, report); err != nil {
+		return nil, fmt.Errorf("validazione conversione PLM: %w", err)
 	}
 	report.CompletedAt = time.Now().Format(time.RFC3339)
 	if err := writeJSON(filepath.Join(dest, "converted", "conversion_report.json"), report); err != nil {
