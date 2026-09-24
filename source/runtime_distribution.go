@@ -140,13 +140,27 @@ func installRuntimeCore(dest, projectName string) (releaseExe, debugExe string, 
 		return "", "", fmt.Errorf("template runtime PLM non leggibile: %w", err)
 	}
 
-	launcherBytes, err := readEmbeddedRuntimeFile(plmGameLauncherArchivePath)
+	// The converted game executable is the already-compiled native PML Studio
+	// runtime binary itself, switched to game-host mode by runtime_install.json.
+	// This avoids a second generic launcher process and, critically, removes the
+	// dependency on pythonw.exe as the visible/owning game process.
+	selfPath, err := os.Executable()
 	if err != nil {
-		return "", "", fmt.Errorf("launcher PLM non disponibile: %w", err)
+		return "", "", fmt.Errorf("eseguibile PML Studio corrente non disponibile: %w", err)
+	}
+	launcherBytes, err := os.ReadFile(selfPath)
+	if err != nil || len(launcherBytes) == 0 {
+		return "", "", fmt.Errorf("eseguibile PML Studio corrente non leggibile: %w", err)
 	}
 	for _, entry := range zr.File {
 		archiveName := filepath.ToSlash(entry.Name)
 		if strings.HasPrefix(archiveName, "_plm_templates/") {
+			continue
+		}
+		// CPython is hosted in-process by <Nome progetto>.exe. Never publish a
+		// pythonw.exe beside the converted game: it would create a second,
+		// misleading executable identity and a child process that can hang.
+		if strings.EqualFold(filepath.Base(filepath.FromSlash(archiveName)), "pythonw.exe") {
 			continue
 		}
 
@@ -283,10 +297,10 @@ func validateLauncherExecution(dest string) error {
 }
 
 func validateRuntimePythonImports(dest string) error {
-	python := filepath.Join(dest, "pythonw.exe")
 	mainPath := filepath.Join(dest, "main.py")
-	if !exists(python) || !exists(mainPath) {
-		return fmt.Errorf("runtime Python incompleto")
+	pythonDLL := filepath.Join(dest, "python311.dll")
+	if !exists(pythonDLL) || !exists(mainPath) {
+		return fmt.Errorf("runtime Python incorporabile incompleto")
 	}
 	// PYTHONUTF8 affects Python I/O but does not change how Python 3 decodes a
 	// source file that has no encoding declaration. The runtime template can
@@ -295,22 +309,9 @@ func validateRuntimePythonImports(dest string) error {
 	if err := normalizeRuntimePythonSourcesUTF8(dest); err != nil {
 		return fmt.Errorf("normalizzazione sorgenti Python runtime: %w", err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, python, mainPath, "--help")
-	cmd.Dir = dest
-	cmd.Env = append(os.Environ(), "PYTHONUTF8=1", "PLM_TEST_MODE=1")
-	output, runErr := cmd.CombinedOutput()
-	if ctx.Err() == context.DeadlineExceeded {
-		return fmt.Errorf("runtime Python non termina il probe --help entro 15 secondi")
-	}
-	if runErr != nil {
-		text := strings.TrimSpace(string(output))
-		if text == "" {
-			text = runErr.Error()
-		}
-		return fmt.Errorf("runtime Python non importabile: %s", text)
-	}
+	// The executable probe is performed by validateLauncherExecution after the
+	// runtime sources are normalized. There is intentionally no pythonw.exe
+	// subprocess anymore: CPython is loaded from python311.dll by the project EXE.
 	return nil
 }
 
@@ -387,7 +388,6 @@ func validateRuntimeInstall(dest string) error {
 		filepath.Join("game", "map_scene.py"),
 		filepath.Join("game", "battle_scene.py"),
 		filepath.Join("game", "data_registry.py"),
-		"pythonw.exe",
 		"python311.dll",
 		filepath.Join("Lib", "site-packages", "pygame", "__init__.py"),
 	}
@@ -418,15 +418,7 @@ func validateRuntimeInstall(dest string) error {
 	if !strings.Contains(strings.ToUpper(filepath.Base(manifest.DebugEXE)), "DEBUG") {
 		return fmt.Errorf("launcher DEBUG non identificabile dal nome: %s", manifest.DebugEXE)
 	}
-	// Il launcher incorporato decide la modalità dal proprio nome file e contiene
-	// il percorso esplicito --debug/PLM_DEBUG=1. Verifichiamo il contratto prima
-	// di accettare una conversione come eseguibile: evita due EXE solo nominali.
-	launcherTemplate, err := readEmbeddedRuntimeFile(plmGameLauncherArchivePath)
-	if err != nil {
-		return err
-	}
-	if !bytes.Contains(launcherTemplate, []byte("--debug")) || !bytes.Contains(launcherTemplate, []byte("PLM_DEBUG=1")) {
-		return fmt.Errorf("launcher runtime privo del contratto DEBUG")
-	}
+	// Release and DEBUG are copies of the same native PML binary; game-host
+	// mode is selected from runtime_install.json and the executable name.
 	return nil
 }
