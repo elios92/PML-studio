@@ -210,6 +210,20 @@ func installRuntimeCore(dest, projectName string) (releaseExe, debugExe string, 
 	return releaseExe, debugExe, nil
 }
 
+func replaceFileAtomicWindows(tmp, path string) error {
+	from, err := syscall.UTF16PtrFromString(tmp)
+	if err != nil {
+		return err
+	}
+	to, err := syscall.UTF16PtrFromString(path)
+	if err != nil {
+		return err
+	}
+	const moveFileReplaceExisting = 0x1
+	const moveFileWriteThrough = 0x8
+	return syscall.MoveFileEx(from, to, moveFileReplaceExisting|moveFileWriteThrough)
+}
+
 func writeBytesAtomic(path string, data []byte, mode os.FileMode) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
@@ -225,19 +239,7 @@ func writeBytesAtomic(path string, data []byte, mode os.FileMode) error {
 	// Do not delete a valid destination before publishing the complete temp
 	// file. MoveFileExW gives Windows replace-existing semantics and asks the OS
 	// to flush the replacement before returning.
-	from, err := syscall.UTF16PtrFromString(tmp)
-	if err != nil {
-		_ = os.Remove(tmp)
-		return err
-	}
-	to, err := syscall.UTF16PtrFromString(path)
-	if err != nil {
-		_ = os.Remove(tmp)
-		return err
-	}
-	const moveFileReplaceExisting = 0x1
-	const moveFileWriteThrough = 0x8
-	if err := syscall.MoveFileEx(from, to, moveFileReplaceExisting|moveFileWriteThrough); err != nil {
+	if err := replaceFileAtomicWindows(tmp, path); err != nil {
 		_ = os.Remove(tmp)
 		return err
 	}
