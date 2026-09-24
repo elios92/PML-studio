@@ -60,6 +60,11 @@ func safeGameExecutableBaseName(name string) string {
 		"Pok�mon", "Pokemon", "POK�MON", "POKEMON", "pok�mon", "pokemon",
 	)
 	name = replacer.Replace(name)
+	// If the source title was already decoded with replacement characters,
+	// normalize the common "Pok?mon/Pok�mon" shape without relying on the exact
+	// Unicode replacement rune.
+	pokemonBroken := regexp.MustCompile(`(?i)pok[^a-zA-Z0-9]mon`)
+	name = pokemonBroken.ReplaceAllString(name, "Pokemon")
 	if name == "" {
 		name = "Pokemon Game"
 	}
