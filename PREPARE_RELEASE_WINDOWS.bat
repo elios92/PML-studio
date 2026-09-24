@@ -30,6 +30,35 @@ if errorlevel 1 (
     goto :fail
 )
 
+if exist "%OUT%" rmdir /s /q "%OUT%"
+mkdir "%OUT%" || goto :fail
+
+echo [BUILD] Build release isolata v%VERSION%...
+pushd "%SRC%"
+set "GOOS=windows"
+set "GOARCH=amd64"
+set "CGO_ENABLED=0"
+go build -trimpath -ldflags="-H=windowsgui" -o "%OUT%\PML.Studio.exe" .
+set "BUILD_RC=!ERRORLEVEL!"
+popd
+if not "!BUILD_RC!"=="0" (
+    echo [FAIL] Compilazione release fallita.
+    goto :fail
+)
+for %%F in ("%OUT%\PML.Studio.exe") do if %%~zF LEQ 0 (
+    echo [FAIL] PML.Studio.exe release vuoto.
+    goto :fail
+)
+
+nset "OUT=%OUTROOT%\\v%VERSION%"
+
+echo [TEST] Validazione Windows prima della release...
+call "%~dp0TEST_WINDOWS_LOCAL.bat" <nul
+if errorlevel 1 (
+    echo [FAIL] La validazione locale non e passata. Release bloccata.
+    goto :fail
+)
+
 if not exist "%EXE%" (
     echo [FAIL] PML Studio.exe non generato.
     goto :fail
