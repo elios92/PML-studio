@@ -332,6 +332,70 @@ func validateNoRuntimeTitlePlaceholder(dest string) error {
 	return nil
 }
 
+
+// validateRubyRuntimeCoverage prevents a preserved Ruby customization from
+// being mistaken for a functional Python conversion. The current runtime has
+// no general Ruby executor/translator, so any modified/custom/plugin script
+// requires an explicit Python bridge before the project can be certified 1:1.
+func validateRubyRuntimeCoverage(dest string) error {
+	type scriptIndexEntry struct {
+		Name           string `json:"name"`
+		Classification string `json:"classification"`
+	}
+	type gap struct {
+		Source         string `json:"source"`
+		Name           string `json:"name"`
+		Classification string `json:"classification"`
+		Reason         string `json:"reason"`
+	}
+	var gaps []gap
+	for _, rel := range []string{
+		filepath.Join("converted", "scripts_ruby", "index.json"),
+		filepath.Join("converted", "plugin_scripts_ruby", "index.json"),
+	} {
+		path := filepath.Join(dest, rel)
+		if !exists(path) {
+			continue
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		var entries []scriptIndexEntry
+		if err := json.Unmarshal(data, &entries); err != nil {
+			return fmt.Errorf("indice script Ruby non valido %s: %w", filepath.ToSlash(rel), err)
+		}
+		for _, entry := range entries {
+			switch strings.ToLower(strings.TrimSpace(entry.Classification)) {
+			case "core_modified", "custom", "plugin":
+				gaps = append(gaps, gap{
+					Source: filepath.ToSlash(rel),
+					Name: entry.Name,
+					Classification: entry.Classification,
+					Reason: "nessun bridge/consumer Python verificato per questo script Ruby",
+				})
+			}
+		}
+	}
+	if len(gaps) == 0 {
+		return nil
+	}
+	reportPath := filepath.Join(dest, "converted", "runtime_compatibility_gaps.json")
+	payload := struct {
+		Schema string `json:"schema"`
+		Version int `json:"version"`
+		Gaps []gap `json:"gaps"`
+	}{
+		Schema: "pml.runtime_compatibility_gaps",
+		Version: 1,
+		Gaps: gaps,
+	}
+	if err := writeJSON(reportPath, payload); err != nil {
+		return fmt.Errorf("scrittura report incompatibilita runtime: %w", err)
+	}
+	return fmt.Errorf("%d script Ruby modificati/custom/plugin non hanno ancora un consumer Python verificato; dettagli in %s", len(gaps), filepath.ToSlash(filepath.Join("converted", "runtime_compatibility_gaps.json")))
+}
+
 func validateConvertedEssentialsProject(source, dest string, report *EssentialsImportReport) error {
 	if report == nil {
 		return fmt.Errorf("report conversione assente")
@@ -346,6 +410,9 @@ func validateConvertedEssentialsProject(source, dest string, report *EssentialsI
 		return err
 	}
 	if err := validateNoRuntimeTitlePlaceholder(dest); err != nil {
+		return err
+	}
+	if err := validateRubyRuntimeCoverage(dest); err != nil {
 		return err
 	}
 
