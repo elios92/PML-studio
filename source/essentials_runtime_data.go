@@ -283,7 +283,7 @@ func preserveEssentialsSourceData(source, dest string) (int, error) {
 	// PBS and Plugins are already copied to their canonical locations.  Record
 	// those exact copies in the preservation manifest instead of duplicating the
 	// same data a third time.
-	if err := addTree(filepath.Join(source, "PBS"), "PBS"); err != nil {
+	if err := addTree(filepath.Join(source, "PBS"), "converted/PBS"); err != nil {
 		return 0, err
 	}
 	if err := addTree(filepath.Join(source, "Plugins"), "converted/plugins_ruby"); err != nil {
@@ -309,14 +309,10 @@ func validatePreservedEssentialsSource(source, dest string) error {
 	}
 	for _, row := range manifest.Files {
 		var stored string
-		switch {
-		case strings.HasPrefix(row.StoredPath, "PBS/"):
-			stored = filepath.Join(dest, filepath.FromSlash(row.StoredPath))
-		case strings.HasPrefix(row.StoredPath, "converted/plugins_ruby/"):
-			stored = filepath.Join(dest, filepath.FromSlash(row.StoredPath))
-		default:
-			stored = filepath.Join(dest, filepath.FromSlash(row.StoredPath))
-		}
+		// StoredPath is always project-root relative. Keep one resolution rule so
+		// the preservation manifest cannot silently point at a legacy/non-canonical
+		// PBS location.
+		stored := filepath.Join(dest, filepath.FromSlash(row.StoredPath))
 		hash, err := sha256HexFile(stored)
 		if err != nil {
 			return fmt.Errorf("snapshot mancante %s: %w", row.StoredPath, err)
