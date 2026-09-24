@@ -174,6 +174,23 @@ func releaseAssetURL(rel githubRelease, name string) string {
 	return ""
 }
 
+
+func cleanupUpdateArtifacts() {
+	target, err := os.Executable()
+	if err != nil {
+		return
+	}
+	// The helper can still be exiting when the restarted app begins.
+	for _, path := range []string{target + ".update-new", target + ".update-backup"} {
+		for i := 0; i < 10; i++ {
+			if err := os.Remove(path); err == nil || os.IsNotExist(err) {
+				break
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+	}
+}
+
 func downloadURL(url string, maxBytes int64) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil { return nil, err }
