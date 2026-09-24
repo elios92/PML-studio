@@ -1,4 +1,4 @@
-//go:build windows && game_launcher
+//go:build windows
 
 package main
 
@@ -34,12 +34,24 @@ func failGameLauncher(message string) {
 	os.Exit(1)
 }
 
-func main() {
+func runEmbeddedGameHost() bool {
 	exe, err := os.Executable()
 	if err != nil {
-		failGameLauncher("Impossibile determinare il percorso del gioco.")
+		return false
 	}
 	root := filepath.Dir(exe)
+	manifestData, manifestErr := os.ReadFile(filepath.Join(root, "converted", "runtime_install.json"))
+	if manifestErr != nil {
+		return false
+	}
+	var manifest runtimeInstallManifest
+	if json.Unmarshal(manifestData, &manifest) != nil {
+		return false
+	}
+	self := filepath.Base(exe)
+	if !strings.EqualFold(self, manifest.ReleaseEXE) && !strings.EqualFold(self, manifest.DebugEXE) {
+		return false
+	}
 	if err := os.Chdir(root); err != nil {
 		failGameLauncher("Impossibile aprire la cartella del gioco.\n\n" + err.Error())
 	}
@@ -104,4 +116,5 @@ func main() {
 	if r != 0 || exitCode != 0 {
 		failGameLauncher("Il runtime Python del progetto si e' chiuso con un errore.")
 	}
+	return true
 }
