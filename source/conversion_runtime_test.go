@@ -102,3 +102,28 @@ func TestEmptyConnectionDocumentIsValidCanonicalData(t *testing.T) {
 		t.Fatalf("zero connections must serialize as an empty array, got %#v", got.Connections)
 	}
 }
+
+
+func TestBattleSettingsCanonicalDefaults(t *testing.T) {
+	root := t.TempDir()
+	want := defaultBattleSettings()
+	if err := saveBattleSettings(root, want); err != nil {
+		// The embedded runtime is part of the real save contract. If it is
+		// unavailable, conversion must fail rather than produce a disconnected
+		// UI-only settings file.
+		t.Fatalf("save canonical battle settings: %v", err)
+	}
+	got, err := loadBattleSettings(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Schema != battleSettingsSchema || got.Version != battleSettingsVersion ||
+		got.MaxPartySize != 6 || got.MegaEvolutionsEnabled ||
+		got.AwakeningsEnabled || got.WildGroupEncounters ||
+		got.WildGroupMin != 3 || got.WildGroupMax != 5 {
+		t.Fatalf("unexpected imported battle defaults: %#v", got)
+	}
+	if info, err := os.Stat(battleSettingsPath(root)); err != nil || info.Size() == 0 {
+		t.Fatalf("converted/battle_settings.json missing or empty: %v", err)
+	}
+}
