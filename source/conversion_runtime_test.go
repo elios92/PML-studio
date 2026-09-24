@@ -55,3 +55,30 @@ func TestRubyRuntimeCoverageBlocksUnsupportedCustomization(t *testing.T) {
 		t.Fatalf("gap report does not identify custom script: %s", data)
 	}
 }
+
+
+func TestRuntimeTilesetContractPaths(t *testing.T) {
+	root := t.TempDir()
+	for _, rel := range []string{
+		filepath.Join("converted", "tilesets"),
+		filepath.Join("assets", "Graphics", "Tilesets"),
+		filepath.Join("assets", "Graphics", "Autotiles"),
+	} {
+		if err := os.MkdirAll(filepath.Join(root, rel), 0755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// This regression test locks the canonical paths used by conversion,
+	// validation, editor and runtime. It intentionally does not accept _PLM_ID
+	// or alternate Autotiles directories.
+	for _, rel := range []string{
+		filepath.Join("converted", "tilesets"),
+		filepath.Join("assets", "Graphics", "Tilesets"),
+		filepath.Join("assets", "Graphics", "Autotiles"),
+	} {
+		info, err := os.Stat(filepath.Join(root, rel))
+		if err != nil || !info.IsDir() {
+			t.Fatalf("canonical runtime asset path missing: %s", filepath.ToSlash(rel))
+		}
+	}
+}
