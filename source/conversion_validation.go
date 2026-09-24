@@ -403,7 +403,7 @@ func validateConvertedEssentialsProject(source, dest string, report *EssentialsI
 		return fmt.Errorf("connessioni non 1:1: %s", mismatch)
 	}
 
-	if err := compareCopiedTree(filepath.Join(source, "PBS"), filepath.Join(dest, "PBS"), "PBS"); err != nil {
+	if err := compareCopiedTree(filepath.Join(source, "PBS"), filepath.Join(dest, "converted", "PBS"), "PBS"); err != nil {
 		return err
 	}
 	// assets/Graphics preserves every original file, but it may also contain
