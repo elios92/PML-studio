@@ -5,7 +5,7 @@ title PML Studio - Validazione Locale Windows
 cd /d "%~dp0"
 
 set "LOG=%~dp0PML_LOCAL_VALIDATION.log"
-set "EXE=%~dp0PML Studio.exe"
+set "BUILD_DIR=%~dp0.build-validation"\nset "EXE=%BUILD_DIR%\\PML Studio.exe"
 set "SRC=%~dp0source"
 set "RUNTIME=%SRC%\runtime_templates\plm_runtime_core.zip"
 set "EXPECTED_RUNTIME_SIZE=30508129"
