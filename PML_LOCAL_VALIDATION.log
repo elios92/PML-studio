@@ -1,12 +1,16 @@
 PML Studio - Validazione Locale Windows
-Data: 24/09/2026 13:19:34,78
+Data: 24/09/2026 13:22:58,75
 
 [PASS] Struttura base e runtime template
 go version go1.27.1 windows/amd64
 
 [TEST] go test ./...
 # plmstudio [plmstudio.test]
-.\runtime_distribution.go:224:17: undefined: syscall.MoveFileEx
+.\event_tools_runtime_bridge.go:68:13: undefined: replaceFileAtomicWindows
+.\event_tools_runtime_bridge.go:101:13: undefined: replaceFileAtomicWindows
+.\global_events_runtime_bridge.go:71:13: undefined: replaceFileAtomicWindows
+.\global_events_runtime_bridge.go:108:13: undefined: replaceFileAtomicWindows
+.\runtime_distribution.go:227:12: undefined: replaceFileAtomicWindows
 FAIL	plmstudio [build failed]
 FAIL
 [FAIL] go test ./... fallito. Vedi PML_LOCAL_VALIDATION.log
