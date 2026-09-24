@@ -157,3 +157,20 @@ func TestPreservedEssentialsSourceUsesCanonicalConvertedPBS(t *testing.T) {
 		t.Fatalf("preservation manifest points outside canonical PBS tree: %s", b)
 	}
 }
+
+
+func TestNormalizeRuntimePythonSourcesUTF8(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "main.py")
+	legacy := []byte{'p','r','i','n','t','(','"', 'c','a','f',0xE9,'"',')','\n'}
+	if err := os.WriteFile(path, legacy, 0644); err != nil { t.Fatal(err) }
+	if err := normalizeRuntimePythonSourcesUTF8(root); err != nil { t.Fatal(err) }
+	got, err := os.ReadFile(path)
+	if err != nil { t.Fatal(err) }
+	if string(got) != "print(\"café\")\n" {
+		t.Fatalf("unexpected UTF-8 normalization: %q", string(got))
+	}
+	if err := normalizeRuntimePythonSourcesUTF8(root); err != nil {
+		t.Fatalf("normalization must be idempotent: %v", err)
+	}
+}
