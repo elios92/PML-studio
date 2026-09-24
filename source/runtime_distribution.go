@@ -279,5 +279,21 @@ func validateRuntimeInstall(dest string) error {
 			return fmt.Errorf("launcher progetto mancante: %s", exe)
 		}
 	}
+	if strings.EqualFold(manifest.ReleaseEXE, manifest.DebugEXE) {
+		return fmt.Errorf("launcher Release e DEBUG non possono avere lo stesso nome")
+	}
+	if !strings.Contains(strings.ToUpper(filepath.Base(manifest.DebugEXE)), "DEBUG") {
+		return fmt.Errorf("launcher DEBUG non identificabile dal nome: %s", manifest.DebugEXE)
+	}
+	// Il launcher incorporato decide la modalità dal proprio nome file e contiene
+	// il percorso esplicito --debug/PLM_DEBUG=1. Verifichiamo il contratto prima
+	// di accettare una conversione come eseguibile: evita due EXE solo nominali.
+	launcherTemplate, err := readEmbeddedRuntimeFile(plmGameLauncherArchivePath)
+	if err != nil {
+		return err
+	}
+	if !bytes.Contains(launcherTemplate, []byte("--debug")) || !bytes.Contains(launcherTemplate, []byte("PLM_DEBUG=1")) {
+		return fmt.Errorf("launcher runtime privo del contratto DEBUG")
+	}
 	return nil
 }
