@@ -342,6 +342,9 @@ func validateConvertedEssentialsProject(source, dest string, report *EssentialsI
 	if err := validateRuntimePythonImports(dest); err != nil {
 		return err
 	}
+	if err := validateLauncherExecution(dest); err != nil {
+		return err
+	}
 	if err := validateNoRuntimeTitlePlaceholder(dest); err != nil {
 		return err
 	}
