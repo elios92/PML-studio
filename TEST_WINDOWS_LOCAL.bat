@@ -7,6 +7,8 @@ cd /d "%~dp0"
 set "LOG=%~dp0PML_LOCAL_VALIDATION.log"
 set "BUILD_DIR=%~dp0.build-validation"
 set "EXE=%BUILD_DIR%\PML Studio.exe"
+set "TEST_OUT=%~dp0test-build"
+set "TEST_EXE=%TEST_OUT%\PML Studio.exe"
 set "SRC=%~dp0source"
 set "RUNTIME=%SRC%\runtime_templates\plm_runtime_core.zip"
 set "EXPECTED_RUNTIME_SIZE=30508129"
@@ -110,6 +112,26 @@ if "!EXE_SIZE!"=="0" (
 echo [PASS] Build Windows x64: !EXE_SIZE! byte
 >>"%LOG%" echo [PASS] Build Windows x64: !EXE_SIZE! byte
 
+if exist "%TEST_OUT%" rmdir /s /q "%TEST_OUT%"
+mkdir "%TEST_OUT%"
+if errorlevel 1 (
+    call :fail "Impossibile creare test-build."
+    goto :end
+)
+copy /y "%EXE%" "%TEST_EXE%" >nul
+if errorlevel 1 (
+    call :fail "Impossibile copiare la build validata in test-build."
+    goto :end
+)
+if not exist "%TEST_EXE%" (
+    call :fail "test-build\PML Studio.exe non e' stato creato."
+    goto :end
+)
+for %%F in ("%TEST_EXE%") do set "TEST_EXE_SIZE=%%~zF"
+if "!TEST_EXE_SIZE!"=="0" (
+    call :fail "test-build\PML Studio.exe e' vuoto."
+    goto :end
+)
 rmdir /s /q "%BUILD_DIR%" >nul 2>nul
 
 echo.
@@ -118,6 +140,10 @@ echo        VALIDAZIONE COMPLETATA: PASS
 echo ==========================================
 >>"%LOG%" echo.
 >>"%LOG%" echo RISULTATO FINALE: PASS
+echo.
+echo BUILD DI TEST DA USARE:
+echo "%TEST_EXE%"
+>>"%LOG%" echo BUILD DI TEST: %TEST_EXE%
 set "RESULT=0"
 goto :end
 
