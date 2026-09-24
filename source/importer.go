@@ -1325,6 +1325,15 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 		}
 	}
 
+	// messages.dat is a compiled Essentials database consumed by the runtime.
+	// Convert it before final validation instead of merely preserving the raw DAT.
+	if messagesDAT := filepath.Join(source, "Data", "messages.dat"); exists(messagesDAT) {
+		emitEssentialsImportProgress(progress, 75, "Conversione messaggi Essentials", "messages.dat")
+		if err := convertMessagesForRuntime(messagesDAT, dest); err != nil {
+			return nil, fmt.Errorf("conversione Data\\messages.dat: %w", err)
+		}
+	}
+
 	// Build the runtime/editor tileset contract from the original RGSS
 	// Tilesets.rxdata. The generic JSON above is diagnostic only; map rendering
 	// consumes converted/tilesets/<id>.json plus the numeric aliases generated in
