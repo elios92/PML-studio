@@ -4,7 +4,7 @@ cd /d "%~dp0"
 
 set "SRC=%~dp0source"
 set "EXE=%~dp0PML Studio.exe"
-set "OUT=%~dp0release"
+set "OUTROOT=%~dp0release"
 set "VERSION_FILE=%SRC%\version.txt"
 
 echo ==========================================
@@ -21,7 +21,7 @@ if "%VERSION%"=="" (
     echo [FAIL] Versione vuota.
     goto :fail
 )
-echo [INFO] Versione sorgente: %VERSION%
+echo [INFO] Versione sorgente: %VERSION%\nset "OUT=%OUTROOT%\\v%VERSION%"
 
 echo [TEST] Validazione Windows prima della release...
 call "%~dp0TEST_WINDOWS_LOCAL.bat" <nul
