@@ -1,10 +1,8 @@
 name: Windows baseline validation
 
+# Manual-only validation. Automatic push/PR triggers are intentionally
+# disabled so development commits never start Actions or send run emails.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
