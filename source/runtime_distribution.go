@@ -14,7 +14,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -208,20 +207,6 @@ func installRuntimeCore(dest, projectName string) (releaseExe, debugExe string, 
 		return "", "", err
 	}
 	return releaseExe, debugExe, nil
-}
-
-func replaceFileAtomicWindows(tmp, path string) error {
-	from, err := syscall.UTF16PtrFromString(tmp)
-	if err != nil {
-		return err
-	}
-	to, err := syscall.UTF16PtrFromString(path)
-	if err != nil {
-		return err
-	}
-	const moveFileReplaceExisting = 0x1
-	const moveFileWriteThrough = 0x8
-	return syscall.MoveFileEx(from, to, moveFileReplaceExisting|moveFileWriteThrough)
 }
 
 func writeBytesAtomic(path string, data []byte, mode os.FileMode) error {
