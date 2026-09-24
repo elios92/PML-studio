@@ -1548,6 +1548,15 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 	if _, _, err := installRuntimeCore(dest, report.ProjectName); err != nil {
 		return nil, fmt.Errorf("installazione runtime PLM: %w", err)
 	}
+	// Runtime-dependent project settings must be wired only after the complete
+	// runtime has been extracted. Running these patches before installation sees
+	// no target modules and would leave battle/party settings disconnected.
+	if err := ensureBattleSettingsRuntime(dest); err != nil {
+		return nil, fmt.Errorf("collegamento runtime impostazioni lotta: %w", err)
+	}
+	if err := ensurePartySizeRuntime(dest); err != nil {
+		return nil, fmt.Errorf("collegamento runtime dimensione squadra: %w", err)
+	}
 	// installRuntimeCore owns main.py. Do not replace it with the legacy
 	// diagnostic bootstrap: doing so discards the actual game entry point after
 	// a successful runtime installation.
