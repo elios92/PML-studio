@@ -1402,7 +1402,7 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 	// never silently replace modified/custom PBS data.
 	importedMechanicsGeneration := detectImportedMechanicsGeneration(dest)
 	if _, mechanicsErr := saveMechanicsSettings(dest, importedMechanicsGeneration); mechanicsErr != nil {
-		report.Warnings = append(report.Warnings, "Profilo meccaniche Pokémon: "+mechanicsErr.Error())
+		return nil, fmt.Errorf("profilo meccaniche Pokémon: %w", mechanicsErr)
 	}
 
 	// PluginScripts.rxdata is empty in the untouched v20.1 reference. Any
