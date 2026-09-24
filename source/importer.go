@@ -1338,6 +1338,29 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 		return nil, fmt.Errorf("conversione tileset/autotile runtime: %w", err)
 	}
 
+	// Connections are mandatory project data even when the source project has
+	// zero connections. Always publish the canonical document so editor/runtime
+	// and final validation see the same source of truth.
+	connectionDoc, connectionIssues, connectionSource := buildConnectionDocumentFromEssentialsRoot(source)
+	if len(connectionIssues) > 0 {
+		first := connectionIssues[0]
+		where := connectionPBSPathLabel(first.Path)
+		if first.Line > 0 {
+			where += fmt.Sprintf(":%d", first.Line)
+		}
+		return nil, fmt.Errorf("conversione connessioni Essentials: %d record non convertibili; primo errore %s: %s", len(connectionIssues), where, first.Message)
+	}
+	if connectionDoc.Meta == nil {
+		connectionDoc.Meta = map[string]any{}
+	}
+	if strings.TrimSpace(connectionSource) != "" {
+		connectionDoc.Meta["source_kind"] = connectionSource
+	}
+	if err := writeConnectionJSONFile(filepath.Join(dest, "converted", "map_connections.json"), connectionDoc); err != nil {
+		return nil, fmt.Errorf("scrittura connessioni canoniche: %w", err)
+	}
+	report.ConnectionsConverted = len(connectionDoc.Connections)
+
 	// Preserve the exact compiled script archive as immutable conversion evidence.
 	// Extracted .rb files are useful for analysis/migration, but the original
 	// Scripts.rxdata is the authoritative record for ordering, removals and every
