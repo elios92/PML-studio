@@ -1147,3 +1147,193 @@ All'inizio di una nuova conversazione o sessione:
 6. lavorare sul primo problema non risolto della fase corrente.
 
 Non ricostruire lo stato del progetto soltanto dalla memoria della conversazione.
+
+
+---
+
+# 25. DISTRIBUZIONE UFFICIALE, IDENTITÀ E CICLO RELEASE
+
+PML Studio è un software proprietario distribuito gratuitamente. La distribuzione pubblica non include il sorgente Go del core.
+
+## 25.1 Identità pubblica
+
+- Nome pubblico del responsabile del progetto: **Elios92**.
+- Credito tecnico/progettazione: **Sol**.
+- Il nome reale di Elios92 non deve comparire nella distribuzione pubblica, nell'About, nell'installer, nei log di supporto, nei metadati di release o nella documentazione pubblica.
+- Prima di una release pubblica eseguire un privacy audit anche su percorsi locali, metadati e artefatti di build.
+
+## 25.2 Separazione Development / Distribution
+
+Devono esistere due ambienti distinti:
+
+1. **Development** — sorgente, test, build e strumenti tecnici.
+2. **Distribution** — installazione equivalente a quella di un normale utente, senza sorgente, BAT o dipendenza da GitHub Desktop.
+
+Una modifica al sorgente non diventa automaticamente un aggiornamento pubblico.
+
+Pipeline obbligatoria:
+
+`SVILUPPO → TEST → REGRESSION → RELEASE APPROVATA → UPDATE DISTRIBUITO`
+
+La copia Distribution deve essere usata come client reale per i test end-to-end dell'updater.
+
+## 25.3 Installer Windows
+
+La prima installazione deve avvenire tramite un installer Windows guidato, con almeno:
+
+- avanzamento installazione;
+- scelta cartella quando appropriato;
+- collegamento Start/Desktop opzionale;
+- versione e icona corrette;
+- registrazione per la disinstallazione Windows;
+- disinstallazione pulita;
+- nessuna cancellazione dei progetti utente.
+
+Le versioni successive devono normalmente essere distribuite tramite updater, senza reinstallazione manuale.
+
+## 25.4 Updater
+
+L'updater ufficiale deve:
+
+- usare esclusivamente release ufficiali;
+- non aggiornare direttamente da `main`;
+- verificare integrità prima dell'installazione;
+- non incorporare token o credenziali;
+- proteggere modifiche non salvate;
+- sostituire l'eseguibile solo dopo la chiusura;
+- prevedere backup/rollback in caso di errore;
+- non modificare i progetti dell'utente;
+- mantenere il nome installato **PML Studio.exe**.
+
+Gli asset di distribuzione possono usare nomi tecnici differenti se richiesto dal canale di release, purché l'eseguibile installato resti `PML Studio.exe`.
+
+---
+
+# 26. MODELLO PLUGIN COMMUNITY
+
+## 26.1 Principio
+
+Il core PML Studio resta proprietario. La community estende il programma tramite un sistema plugin ufficiale e documentato, senza modificare direttamente il core.
+
+**Standard** è la modalità in cui gli utenti creano il gioco e utilizzano tutte le funzioni approvate, comprese quelle aggiunte dai plugin.
+
+**Advanced** è l'ambiente destinato allo sviluppo, test e debug di PML Studio/plugin. Una funzione complessa non deve essere relegata ad Advanced solo perché internamente usa codice.
+
+## 26.2 Esperienza utente
+
+Un plugin approvato deve essere installabile con un flusso one-click:
+
+`SELEZIONA → INSTALLA → VERIFICA → REGISTRA → FUNZIONE DISPONIBILE`
+
+Non sono accettabili, per il catalogo ufficiale, plugin che richiedano all'utente Standard di modificare manualmente Python, JSON, file interni o codice del progetto.
+
+## 26.3 API e isolamento
+
+I plugin devono estendere PML Studio esclusivamente tramite **PML Plugin API** autorizzate.
+
+Un plugin non deve avere accesso arbitrario a:
+
+- rete;
+- processi esterni;
+- filesystem generale;
+- `PML Studio.exe`;
+- updater;
+- moduli FROZEN;
+- dati di altri plugin.
+
+Le operazioni sui progetti devono passare attraverso API controllate e rispettare il protocollo di non distruzione.
+
+Il semplice divieto documentale non è sufficiente: l'implementazione futura deve prevedere un confine tecnico di esecuzione coerente con queste restrizioni.
+
+## 26.4 Catalogo e verifica
+
+Gli sviluppatori possono creare e testare privatamente plugin in Advanced.
+
+Il catalogo ufficiale deve mostrare soltanto plugin che superano il processo di validazione PML previsto per:
+
+- manifest e struttura;
+- versione API;
+- compatibilità PML Studio;
+- dipendenze;
+- integrità;
+- installazione/disinstallazione;
+- API utilizzate;
+- test automatici richiesti;
+- regressioni note;
+- controlli di sicurezza.
+
+Lo stato di verifica non costituisce garanzia assoluta di assenza di bug o malware.
+
+## 26.5 Dati e disinstallazione
+
+La rimozione, disabilitazione, perdita o quarantena antivirus di un plugin non deve cancellare automaticamente i dati del plugin presenti nel progetto.
+
+PML Studio deve:
+
+- disabilitare in sicurezza il plugin non disponibile;
+- conservare i dati del progetto;
+- indicare la dipendenza mancante;
+- permettere la reinstallazione;
+- richiedere un'azione esplicita separata per eliminare definitivamente dati appartenenti al plugin.
+
+## 26.6 Aggiornamenti plugin
+
+Gli aggiornamenti dei plugin non devono essere applicati di nascosto durante il lavoro sul progetto.
+
+Flusso:
+
+`NOTIFICA → CONFERMA UTENTE → PUNTO DI RIPRISTINO → UPDATE → VERIFICA → COMMIT/ROLLBACK`
+
+Se l'aggiornamento fallisce, deve essere possibile ripristinare la versione precedente senza corrompere il progetto.
+
+## 26.7 Antivirus
+
+PML Studio non deve:
+
+- disabilitare o aggirare antivirus;
+- creare esclusioni antivirus automatiche;
+- ripristinare automaticamente un plugin rimosso/quarantinato dall'antivirus;
+- chiedere all'utente di disattivare la protezione per installare un plugin.
+
+Se un antivirus rimuove un plugin, PML Studio deve degradare in modo sicuro preservando il progetto.
+
+---
+
+# 27. SECURITY & PRIVACY BASELINE
+
+La sicurezza dei dati dell'utente è requisito di architettura e parte della Definition of Done.
+
+## 27.1 Principi
+
+- minimo privilegio;
+- nessuna credenziale o token incorporato nell'EXE;
+- separazione tra binari applicativi e progetti utente;
+- nessuna telemetria nascosta;
+- log minimizzati e privi di dati sensibili non necessari;
+- scritture protette/atomiche quando possibile;
+- backup e rollback per operazioni distruttive;
+- verifica integrità degli aggiornamenti;
+- fail-safe/fail-closed per plugin corrotti o incompatibili;
+- nessun ostacolo alle protezioni di Windows o antivirus.
+
+## 27.2 Progetti utente
+
+I progetti appartengono all'utente e non devono essere cifrati o resi irrecuperabili senza una necessità esplicita.
+
+Aggiornamento, reinstallazione, disinstallazione, crash o rimozione di plugin non devono cancellare i progetti.
+
+## 27.3 Gate sicurezza release
+
+Prima di una release pubblica significativa verificare almeno:
+
+- integrità updater;
+- assenza credenziali/segreti;
+- gestione sicura file temporanei;
+- comportamento rollback;
+- privilegi richiesti;
+- log e privacy;
+- confini plugin quando il sistema plugin sarà attivo;
+- interazione con antivirus;
+- non distruzione dei dati.
+
+Una funzione che opera correttamente ma introduce accesso incontrollato ai dati o al sistema non può essere marcata DONE/FROZEN.
