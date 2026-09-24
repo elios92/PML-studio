@@ -127,3 +127,33 @@ func TestBattleSettingsCanonicalDefaults(t *testing.T) {
 		t.Fatalf("converted/battle_settings.json missing or empty: %v", err)
 	}
 }
+
+
+func TestPreservedEssentialsSourceUsesCanonicalConvertedPBS(t *testing.T) {
+	source := filepath.Join(t.TempDir(), "source")
+	dest := filepath.Join(t.TempDir(), "dest")
+	for _, dir := range []string{
+		filepath.Join(source, "Data"),
+		filepath.Join(source, "PBS"),
+		filepath.Join(source, "Plugins"),
+		filepath.Join(dest, "converted", "PBS"),
+		filepath.Join(dest, "converted", "plugins_ruby"),
+	} {
+		if err := os.MkdirAll(dir, 0755); err != nil { t.Fatal(err) }
+	}
+	if err := os.WriteFile(filepath.Join(source, "Data", "System.rxdata"), []byte("data"), 0644); err != nil { t.Fatal(err) }
+	if err := os.WriteFile(filepath.Join(source, "PBS", "pokemon.txt"), []byte("pbs"), 0644); err != nil { t.Fatal(err) }
+	if err := os.WriteFile(filepath.Join(source, "Plugins", "plugin.rb"), []byte("plugin"), 0644); err != nil { t.Fatal(err) }
+	if err := os.WriteFile(filepath.Join(dest, "converted", "PBS", "pokemon.txt"), []byte("pbs"), 0644); err != nil { t.Fatal(err) }
+	if err := os.WriteFile(filepath.Join(dest, "converted", "plugins_ruby", "plugin.rb"), []byte("plugin"), 0644); err != nil { t.Fatal(err) }
+
+	if _, err := preserveEssentialsSourceData(source, dest); err != nil { t.Fatal(err) }
+	if err := validatePreservedEssentialsSource(source, dest); err != nil {
+		t.Fatalf("canonical source preservation must validate: %v", err)
+	}
+	b, err := os.ReadFile(filepath.Join(dest, "converted", "source_essentials", "manifest.json"))
+	if err != nil { t.Fatal(err) }
+	if !strings.Contains(string(b), "converted/PBS/pokemon.txt") {
+		t.Fatalf("preservation manifest points outside canonical PBS tree: %s", b)
+	}
+}
