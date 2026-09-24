@@ -68,7 +68,7 @@ func ensureGlobalEventsRuntimeBridge(projectRoot string) error {
 		if err := os.WriteFile(tmp, plmGlobalEventsRuntimePython, 0644); err != nil {
 			return fmt.Errorf("scrittura runtime eventi globali: %w", err)
 		}
-		if err := os.Rename(tmp, runtimePath); err != nil {
+		if err := replaceFileAtomicWindows(tmp, runtimePath); err != nil {
 			_ = os.Remove(tmp)
 			return fmt.Errorf("installazione runtime eventi globali: %w", err)
 		}
@@ -105,7 +105,7 @@ func ensureGlobalEventsRuntimeBridge(projectRoot string) error {
 		if err := os.WriteFile(tmp, []byte(text), 0644); err != nil {
 			return fmt.Errorf("aggiornamento game/map_scene.py: %w", err)
 		}
-		if err := os.Rename(tmp, mapScenePath); err != nil {
+		if err := replaceFileAtomicWindows(tmp, mapScenePath); err != nil {
 			_ = os.Remove(tmp)
 			return fmt.Errorf("aggiornamento game/map_scene.py: %w", err)
 		}
