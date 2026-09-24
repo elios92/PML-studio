@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 	"unsafe"
 )
 
@@ -278,6 +279,13 @@ func validateRuntimePythonImports(dest string) error {
 	if !exists(python) || !exists(mainPath) {
 		return fmt.Errorf("runtime Python incompleto")
 	}
+	// PYTHONUTF8 affects Python I/O but does not change how Python 3 decodes a
+	// source file that has no encoding declaration. The runtime template can
+	// contain legacy Windows-1252 bytes (for example 0xE9 in Italian text), so
+	// normalize every Python source to UTF-8 before the import probe.
+	if err := normalizeRuntimePythonSourcesUTF8(dest); err != nil {
+		return fmt.Errorf("normalizzazione sorgenti Python runtime: %w", err)
+	}
 	cmd := exec.Command(python, mainPath, "--help")
 	cmd.Dir = dest
 	cmd.Env = append(os.Environ(), "PYTHONUTF8=1")
@@ -290,6 +298,74 @@ func validateRuntimePythonImports(dest string) error {
 		return fmt.Errorf("runtime Python non importabile: %s", text)
 	}
 	return nil
+}
+
+func normalizeRuntimePythonSourcesUTF8(root string) error {
+	return filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || !strings.EqualFold(filepath.Ext(path), ".py") {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if utf8.Valid(data) {
+			return nil
+		}
+		// CP1252 is the legacy encoding used by the Windows-authored runtime
+		// templates. Decode the defined 0x80-0x9F characters explicitly and use
+		// the byte's Unicode code point for the remaining 0xA0-0xFF range.
+		var out strings.Builder
+		out.Grow(len(data))
+		for _, b := range data {
+			if b < 0x80 {
+				out.WriteByte(b)
+				continue
+			}
+			if r, ok := cp1252Rune(b); ok {
+				out.WriteRune(r)
+			} else {
+				out.WriteRune(rune(b))
+			}
+		}
+		return writeBytesAtomic(path, []byte(out.String()), 0644)
+	})
+}
+
+func cp1252Rune(b byte) (rune, bool) {
+	switch b {
+	case 0x80: return '€', true
+	case 0x82: return '‚', true
+	case 0x83: return 'ƒ', true
+	case 0x84: return '„', true
+	case 0x85: return '…', true
+	case 0x86: return '†', true
+	case 0x87: return '‡', true
+	case 0x88: return 'ˆ', true
+	case 0x89: return '‰', true
+	case 0x8A: return 'Š', true
+	case 0x8B: return '‹', true
+	case 0x8C: return 'Œ', true
+	case 0x8E: return 'Ž', true
+	case 0x91: return '‘', true
+	case 0x92: return '’', true
+	case 0x93: return '“', true
+	case 0x94: return '”', true
+	case 0x95: return '•', true
+	case 0x96: return '–', true
+	case 0x97: return '—', true
+	case 0x98: return '˜', true
+	case 0x99: return '™', true
+	case 0x9A: return 'š', true
+	case 0x9B: return '›', true
+	case 0x9C: return 'œ', true
+	case 0x9E: return 'ž', true
+	case 0x9F: return 'Ÿ', true
+	default: return 0, false
+	}
 }
 func validateRuntimeInstall(dest string) error {
 	required := []string{
