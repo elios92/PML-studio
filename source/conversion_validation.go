@@ -415,6 +415,9 @@ func validateConvertedEssentialsProject(source, dest string, report *EssentialsI
 	if err := validateRubyRuntimeCoverage(dest); err != nil {
 		return err
 	}
+	if err := validateConvertedAutotiles(dest); err != nil {
+		return err
+	}
 
 	sourceMaps, err := essentialsMapIDs(source)
 	if err != nil {
@@ -549,6 +552,46 @@ func validateConvertedEssentialsProject(source, dest string, report *EssentialsI
 	if exists(filepath.Join(source, "Data", "PluginScripts.rxdata")) {
 		if !exists(filepath.Join(dest, "converted", "plugin_scripts_ruby", "index.json")) {
 			return fmt.Errorf("PluginScripts.rxdata non estratto correttamente")
+		}
+	}
+	return nil
+}
+
+
+func validateConvertedAutotiles(dest string) error {
+	tilesetDir := filepath.Join(dest, "converted", "tilesets")
+	entries, err := os.ReadDir(tilesetDir)
+	if err != nil {
+		return fmt.Errorf("metadati tileset runtime mancanti: %w", err)
+	}
+	autotileDir := filepath.Join(dest, "assets", "Graphics", "Autotiles")
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.EqualFold(filepath.Ext(entry.Name()), ".json") {
+			continue
+		}
+		var ts runtimeTilesetJSON
+		b, err := os.ReadFile(filepath.Join(tilesetDir, entry.Name()))
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(b, &ts); err != nil {
+			return fmt.Errorf("tileset runtime %s non valido: %w", entry.Name(), err)
+		}
+		for slot, canonical := range ts.AutotileNames {
+			if strings.TrimSpace(canonical) == "" {
+				continue
+			}
+			found := false
+			for _, ext := range []string{".png", ".PNG", ".bmp", ".BMP", ".jpg", ".JPG", ".jpeg", ".JPEG"} {
+				p := filepath.Join(autotileDir, canonical+ext)
+				if info, statErr := os.Stat(p); statErr == nil && !info.IsDir() && info.Size() > 0 {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Errorf("autotile runtime mancante: tileset %03d slot %d alias %s in assets/Graphics/Autotiles", ts.ID, slot+1, canonical)
+			}
 		}
 	}
 	return nil
