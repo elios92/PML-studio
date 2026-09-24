@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -221,8 +222,22 @@ func writeBytesAtomic(path string, data []byte, mode os.FileMode) error {
 		_ = os.Remove(tmp)
 		return err
 	}
-	_ = os.Remove(path)
-	if err := os.Rename(tmp, path); err != nil {
+	// Do not delete a valid destination before publishing the complete temp
+	// file. MoveFileExW gives Windows replace-existing semantics and asks the OS
+	// to flush the replacement before returning.
+	from, err := syscall.UTF16PtrFromString(tmp)
+	if err != nil {
+		_ = os.Remove(tmp)
+		return err
+	}
+	to, err := syscall.UTF16PtrFromString(path)
+	if err != nil {
+		_ = os.Remove(tmp)
+		return err
+	}
+	const moveFileReplaceExisting = 0x1
+	const moveFileWriteThrough = 0x8
+	if err := syscall.MoveFileEx(from, to, moveFileReplaceExisting|moveFileWriteThrough); err != nil {
 		_ = os.Remove(tmp)
 		return err
 	}
