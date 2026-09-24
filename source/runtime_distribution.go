@@ -229,6 +229,34 @@ func writeBytesAtomic(path string, data []byte, mode os.FileMode) error {
 	return nil
 }
 
+func validateLauncherExecution(dest string) error {
+	manifestData, err := os.ReadFile(filepath.Join(dest, "converted", "runtime_install.json"))
+	if err != nil {
+		return fmt.Errorf("manifest runtime mancante: %w", err)
+	}
+	var manifest runtimeInstallManifest
+	if err := json.Unmarshal(manifestData, &manifest); err != nil {
+		return fmt.Errorf("manifest runtime non valido: %w", err)
+	}
+	// Il launcher incorporato espone PLM_TEST_MODE per un probe senza UI.
+	// Eseguiamo entrambi i file, così una conversione non viene dichiarata valida
+	// se uno dei due EXE non è realmente avviabile su Windows.
+	for _, exe := range []string{manifest.ReleaseEXE, manifest.DebugEXE} {
+		cmd := exec.Command(filepath.Join(dest, exe))
+		cmd.Dir = dest
+		cmd.Env = append(os.Environ(), "PLM_TEST_MODE=1", "PYTHONUTF8=1")
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			text := strings.TrimSpace(string(output))
+			if text == "" {
+				text = err.Error()
+			}
+			return fmt.Errorf("launcher %s non avviabile: %s", exe, text)
+		}
+	}
+	return nil
+}
+
 func validateRuntimePythonImports(dest string) error {
 	python := filepath.Join(dest, "pythonw.exe")
 	mainPath := filepath.Join(dest, "main.py")
