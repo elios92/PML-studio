@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unsafe"
 )
 
 // The converted project must be runnable immediately after import.  The
@@ -207,6 +208,18 @@ func installRuntimeCore(dest, projectName string) (releaseExe, debugExe string, 
 		return "", "", err
 	}
 	return releaseExe, debugExe, nil
+}
+
+func replaceFileAtomicWindows(tmp, path string) error {
+	r, _, callErr := pMoveFileExW.Call(
+		uintptr(unsafe.Pointer(wstr(tmp))),
+		uintptr(unsafe.Pointer(wstr(path))),
+		MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH,
+	)
+	if r == 0 {
+		return fmt.Errorf("sostituzione atomica fallita: %v", callErr)
+	}
+	return nil
 }
 
 func writeBytesAtomic(path string, data []byte, mode os.FileMode) error {
