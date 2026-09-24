@@ -308,7 +308,6 @@ func validatePreservedEssentialsSource(source, dest string) error {
 		return err
 	}
 	for _, row := range manifest.Files {
-		var stored string
 		// StoredPath is always project-root relative. Keep one resolution rule so
 		// the preservation manifest cannot silently point at a legacy/non-canonical
 		// PBS location.
