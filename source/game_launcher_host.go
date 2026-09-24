@@ -98,16 +98,20 @@ func runEmbeddedGameHost() bool {
 		}
 	}
 	argsJSON, _ := json.Marshal(args)
-	script := fmt.Sprintf("import sys\\nsys.argv = %s\\n", string(argsJSON))
+	// argsJSON is JSON, which is also valid Python list syntax. The source fed
+	// to PyRun_SimpleString must contain REAL newline bytes: "\\n" here would
+	// reach Python as a backslash followed by 'n' and trigger
+	// "unexpected character after line continuation character".
+	script := fmt.Sprintf("import sys\nsys.argv = %s\n", string(argsJSON))
 	if os.Getenv("PLM_MAP_INDEX") != "" {
 		// Playtest of projects organized in physical region folders uses the
 		// same non-destructive resolver previously injected through python -c.
 		script += playtestMapResolverBootstrap()
 	} else {
 		script += fmt.Sprintf(
-			"import os, runpy\\n"+
-				"os.chdir(%q)\\n"+
-				"runpy.run_path(%q, run_name='__main__')\\n",
+			"import os, runpy\n"+
+				"os.chdir(%q)\n"+
+				"runpy.run_path(%q, run_name='__main__')\n",
 			filepath.ToSlash(root), filepath.ToSlash(mainPy),
 		)
 	}
