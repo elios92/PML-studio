@@ -290,17 +290,19 @@ func startPlaytest() error {
 		setText(hwndStatus, "Playtest: avviso runtime eventi (vedi log), avvio comunque...")
 	}
 
-	exePath, prefix, err := resolvePlaytestPython(currentProject)
+	manifestData, err := os.ReadFile(filepath.Join(currentProject, "converted", "runtime_install.json"))
 	if err != nil {
-		return err
+		return fmt.Errorf("manifest runtime non trovato: %w", err)
 	}
-	args := append([]string{}, prefix...)
-	if projectHasRegionalMaps() {
-		args = append(args, "-S", "-c", playtestMapResolverBootstrap())
-	} else {
-		args = append(args, mainPath)
+	var runtimeManifest runtimeInstallManifest
+	if err := json.Unmarshal(manifestData, &runtimeManifest); err != nil {
+		return fmt.Errorf("manifest runtime non valido: %w", err)
 	}
-	args = append(args, playtestPreferenceArgs(settings, currentMap.ID)...)
+	exePath := filepath.Join(currentProject, runtimeManifest.DebugEXE)
+	if runtimeManifest.DebugEXE == "" || !exists(exePath) {
+		return fmt.Errorf("EXE DEBUG del progetto non trovato: %s", runtimeManifest.DebugEXE)
+	}
+	args := playtestPreferenceArgs(settings, currentMap.ID)
 	cmd := exec.Command(exePath, args...)
 	cmd.Dir = currentProject
 	mapIndexPath := filepath.Join(currentProject, ".plm", "map_index.json")
