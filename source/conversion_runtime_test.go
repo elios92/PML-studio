@@ -82,3 +82,23 @@ func TestRuntimeTilesetContractPaths(t *testing.T) {
 		}
 	}
 }
+
+
+func TestEmptyConnectionDocumentIsValidCanonicalData(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "converted", "map_connections.json")
+	doc := defaultConnectionDocument()
+	if err := writeConnectionJSONFile(path, doc); err != nil {
+		t.Fatal(err)
+	}
+	got, err := readCanonicalConnectionDocument(path)
+	if err != nil {
+		t.Fatalf("empty canonical connection document must be readable: %v", err)
+	}
+	if got.Schema != connectionSchema || got.Version != connectionVersion {
+		t.Fatalf("unexpected connection contract: %q v%d", got.Schema, got.Version)
+	}
+	if got.Connections == nil || len(got.Connections) != 0 {
+		t.Fatalf("zero connections must serialize as an empty array, got %#v", got.Connections)
+	}
+}
