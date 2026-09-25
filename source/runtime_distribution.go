@@ -1085,6 +1085,12 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	if err := writeBytesAtomic(dialoguePath, dialogue, 0644); err != nil {
 		return fmt.Errorf("aggiornamento dialoghi Essentials: %w", err)
 	}
+	// The compatibility module above validates that the embedded template still
+	// has the expected entry points. The final implementation is rendered on the
+	// native 512x384 Essentials canvas and uses the imported Windowskins.
+	if err := writeBytesAtomic(dialoguePath, []byte(runtimeEssentialsDialoguePython), 0644); err != nil {
+		return fmt.Errorf("installazione renderer dialoghi Essentials: %w", err)
+	}
 
 	optionsPath := filepath.Join(dest, "game", "options_system.py")
 	optionsData, err := os.ReadFile(optionsPath)
