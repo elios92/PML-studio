@@ -1011,6 +1011,16 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	patched = bytes.Replace(patched, []byte(`                    pygame.draw.rect(self.graphics.screen, (90, 155, 210), (panel.x + 12, y - 3, panel.width - 24, 33), border_radius=4)`), []byte(`                    pygame.draw.rect(self.graphics.screen, (90, 155, 210), (panel.x + 12 * ui_scale, y - 3 * ui_scale, panel.width - 24 * ui_scale, 33 * ui_scale), border_radius=4 * ui_scale)`), 1)
 	patched = bytes.Replace(patched, []byte(`                self.graphics.screen.blit(font.render(str(choice), True, (25, 35, 50)), (panel.x + 28, y))`), []byte(`                self.graphics.screen.blit(font.render(str(choice), True, (25, 35, 50)), (panel.x + 28 * ui_scale, y))`), 1)
 
+	patched, err = replaceRuntimePythonSection(
+		patched,
+		"    def _show_choices(self, choices: list[str]) -> int:",
+		"\n    def _show_picture(self, parameters: list[Any]) -> None:",
+		runtimeEssentialsChoiceMethod,
+	)
+	if err != nil {
+		return err
+	}
+
 	if err := writeBytesAtomic(mapPath, patched, 0644); err != nil {
 		return fmt.Errorf("aggiornamento UI eventi runtime: %w", err)
 	}
