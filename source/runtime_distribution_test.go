@@ -96,12 +96,16 @@ func TestRuntimeNameEntryUsesImportedEssentialsAssets(t *testing.T) {
         "event_action(root,e)",
         "_txt(tab,font,ch,44+col*32,24+row*38,True)",
         "action=event_action(root,e)",
-        "PRESET_NAMES=(\"Alex\",\"Sam\",\"Nico\",\"Ari\",\"Eli\")",
+        "MALE_PRESET_NAMES=(\"Alex\",\"Sam\",\"Nico\",\"Ari\",\"Eli\")",
+        "FEMALE_PRESET_NAMES=(\"Maya\",\"Luna\",\"Iris\",\"Zoe\",\"Nina\")",
         "Nome personalizzato",
         "Custom name",
-        "scene._show_choices([custom_label,*PRESET_NAMES])",
+        "presets=FEMALE_PRESET_NAMES if profile==2 else MALE_PRESET_NAMES",
+        "scene._show_choices([custom_label,*presets])",
         "if selected==0:",
         "return show_name_entry(scene,None,1,10,\"\",1)",
+        "if 1<=selected<=len(presets):",
+        "return presets[selected-1]",
     } {
         if !strings.Contains(src, want) {
             t.Fatalf("Essentials naming UI missing %q", want)
