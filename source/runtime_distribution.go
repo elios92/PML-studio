@@ -553,6 +553,7 @@ func validateRuntimeInstall(dest string) error {
 		filepath.Join("game", "map_scene.py"),
 		filepath.Join("game", "battle_scene.py"),
 		filepath.Join("game", "data_registry.py"),
+		filepath.Join("config", "options.json"),
 		"python311.dll",
 		filepath.Join("Lib", "site-packages", "pygame", "__init__.py"),
 	}
