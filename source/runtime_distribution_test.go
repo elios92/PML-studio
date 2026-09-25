@@ -130,6 +130,7 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         "game/map_scene.py",
         "game/options_dialogue.py",
         "game/options_system.py",
+        "game/title_scene.py",
         "config/options.json",
     } {
         data, err := readEmbeddedRuntimeFile(rel)
@@ -201,9 +202,72 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         t.Fatal(err)
     }
     dialogueText := string(dialogueData)
-    for _, want := range []string{`\l\[(\d+)\]`, `"<ac>"`, `text.split("\n")`, "scene._render_world()", "ui_scale = max(1, int(min(", "viewport_w, viewport_h = 512 * ui_scale, 384 * ui_scale", "line_height", "power green.ttf"} {
+    for _, want := range []string{
+        `linecount=2`,
+        `\l\[(\d+)\]`,
+        `"<ac>"`,
+        `raw.split("\n")`,
+        "scene._render_world()",
+        `load_windowskin(scene.project_root,"speech"`,
+        "BASE_W-left-right-4",
+        "linecount*32",
+        "blit_logical_overlay",
+        "power green.ttf",
+    } {
         if !strings.Contains(dialogueText, want) {
             t.Fatalf("Essentials dialogue parser missing %q", want)
+        }
+    }
+
+    uiData, err := os.ReadFile(filepath.Join(root, "game", "essentials_ui.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    uiText := string(uiData)
+    for _, want := range []string{
+        "BASE_W=512",
+        "BASE_H=384",
+        "speech hgss 1",
+        "choice 1",
+        "def draw_windowskin",
+        "pygame.transform.scale",
+    } {
+        if !strings.Contains(uiText, want) {
+            t.Fatalf("shared Essentials UI renderer missing %q", want)
+        }
+    }
+
+    titleData, err := os.ReadFile(filepath.Join(root, "game", "title_scene.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    titleText := string(titleData)
+    for _, want := range []string{
+        "from game.essentials_title_ui import show_splash",
+        "from game.essentials_title_ui import title_wait",
+        "from game.essentials_title_ui import draw_load_menu",
+    } {
+        if !strings.Contains(titleText, want) {
+            t.Fatalf("title scene did not route through Essentials UI: %q", want)
+        }
+    }
+
+    titleUIData, err := os.ReadFile(filepath.Join(root, "game", "essentials_title_ui.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    titleUIText := string(titleUIData)
+    for _, want := range []string{
+        "(0,222 if selected else 0,408,222)",
+        "(0,490 if selected else 444,408,46)",
+        "(48,y)",
+        "y+=224",
+        "row*48",
+        "_font(scene,27)",
+        "present_logical",
+    } {
+        if !strings.Contains(titleUIText, want) {
+            t.Fatalf("Essentials load menu geometry missing %q", want)
         }
     }
 
