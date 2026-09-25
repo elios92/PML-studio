@@ -284,6 +284,9 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         t.Fatal(err)
     }
     titleUIText := string(titleUIData)
+    if strings.Contains(titleUIText, "trchar000") || strings.Contains(titleUIText, "trchar001") {
+        t.Fatal("title UI must use the imported PlayerMetadata WalkCharset, not hard-coded player aliases")
+    }
     for _, want := range []string{
         "(0,222 if selected else 0,408,222)",
         "(0,490 if selected else 444,408,46)",
@@ -295,6 +298,9 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         `intl("New Game")`,
         `intl("Continue")`,
         `action=event_action(scene.project_root,event)`,
+        "def _walk_charset(scene,state):",
+        `metadata=scene.project_root/"converted"/"PBS"/"metadata.txt"`,
+        `if key.casefold()=="walkcharset":`,
     } {
         if !strings.Contains(titleUIText, want) {
             t.Fatalf("Essentials load menu geometry missing %q", want)
