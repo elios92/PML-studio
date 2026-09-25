@@ -154,6 +154,8 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         "pbEnterText",
         "value = show_name_entry(self, helptext, minlength, maxlength, initial)",
         "numeric_args = re.sub",
+        "for continuation in parts[1:]",
+        "if continuation and not message.endswith(\" \")",
     } {
         if !strings.Contains(mapText, want) {
             t.Fatalf("patched map scene missing %q", want)
@@ -168,7 +170,7 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         t.Fatal(err)
     }
     dialogueText := string(dialogueData)
-    for _, want := range []string{`\l\[(\d+)\]`, `"<ac>"`, `text.split("\n")`, "ui_scale", "line_height"} {
+    for _, want := range []string{`\l\[(\d+)\]`, `"<ac>"`, `text.split("\n")`, "ui_scale", "line_height", "power green.ttf"} {
         if !strings.Contains(dialogueText, want) {
             t.Fatalf("Essentials dialogue parser missing %q", want)
         }
