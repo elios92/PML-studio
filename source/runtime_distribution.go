@@ -684,9 +684,26 @@ def _panel_piece(scene,source):
     piece.blit(scene.panels,(0,0),source)
     return piece
 
+def _walk_charset(scene,state):
+    profile=max(1,int(state.get("player_profile",1) or 1))
+    metadata=scene.project_root/"converted"/"PBS"/"metadata.txt"
+    section=None
+    if metadata.is_file():
+        for raw in metadata.read_text(encoding="utf-8-sig").splitlines():
+            line=raw.strip()
+            if not line or line.startswith("#"):continue
+            if line.startswith("[") and line.endswith("]"):
+                section=line[1:-1].strip()
+                continue
+            if section==str(profile) and "=" in line:
+                key,value=(part.strip() for part in line.split("=",1))
+                if key.casefold()=="walkcharset":
+                    return value
+    return ""
+
 def _player_frame(scene,state):
-    profile=int(state.get("player_profile",1) or 1)
-    path=scene.characters.find("trchar001" if profile==2 else "trchar000")
+    charset=_walk_charset(scene,state)
+    path=scene.characters.find(charset) if charset else None
     if not path:return None
     sheet=load_image(path)
     fw,fh=sheet.get_width()//4,sheet.get_height()//4
