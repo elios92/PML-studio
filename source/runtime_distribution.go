@@ -1025,6 +1025,42 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return fmt.Errorf("aggiornamento UI eventi runtime: %w", err)
 	}
 
+	titlePath := filepath.Join(dest, "game", "title_scene.py")
+	titleData, err := os.ReadFile(titlePath)
+	if err != nil {
+		return fmt.Errorf("lettura runtime title_scene.py: %w", err)
+	}
+	titleData, err = replaceRuntimePythonSection(
+		titleData,
+		"    def _show_splash(self):",
+		"\n    def _title_wait(self):",
+		"    def _show_splash(self):\n        from game.essentials_title_ui import show_splash\n        return show_splash(self)\n",
+	)
+	if err != nil {
+		return err
+	}
+	titleData, err = replaceRuntimePythonSection(
+		titleData,
+		"    def _title_wait(self):",
+		"\n    def _panel_piece(self, area, size):",
+		"    def _title_wait(self):\n        from game.essentials_title_ui import title_wait\n        return title_wait(self)\n",
+	)
+	if err != nil {
+		return err
+	}
+	titleData, err = replaceRuntimePythonSection(
+		titleData,
+		"    def _draw_load_menu(self,entries,index,save_data):",
+		"\n    def _choose(self):",
+		"    def _draw_load_menu(self,entries,index,save_data):\n        from game.essentials_title_ui import draw_load_menu\n        return draw_load_menu(self,entries,index,save_data)\n",
+	)
+	if err != nil {
+		return err
+	}
+	if err := writeBytesAtomic(titlePath, titleData, 0644); err != nil {
+		return fmt.Errorf("aggiornamento UI titolo/load Essentials: %w", err)
+	}
+
 	dialoguePath := filepath.Join(dest, "game", "options_dialogue.py")
 	dialogue, err := os.ReadFile(dialoguePath)
 	if err != nil {
