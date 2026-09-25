@@ -256,7 +256,8 @@ from game.ui_assets import UIAssets
 from game.message_system import intl
 from game.options_system import event_action, load_settings, resolved_language
 
-PRESET_NAMES=("Alex","Sam","Nico","Ari","Eli")
+MALE_PRESET_NAMES=("Alex","Sam","Nico","Ari","Eli")
+FEMALE_PRESET_NAMES=("Maya","Luna","Iris","Zoe","Nina")
 
 MODES=[
 "ABCDEFGHIJ ,.KLMNOPQRST '-UVWXYZ     ♂♀             0123456789   ",
@@ -293,13 +294,15 @@ def choose_player_name(scene:Any):
  root=Path(scene.project_root)
  language=resolved_language(load_settings(root))
  custom_label="Nome personalizzato" if language=="it" else "Custom name"
- selected=scene._show_choices([custom_label,*PRESET_NAMES])
+ profile=int(scene.game_state.get("player_profile",1) or 1)
+ presets=FEMALE_PRESET_NAMES if profile==2 else MALE_PRESET_NAMES
+ selected=scene._show_choices([custom_label,*presets])
  if scene.game_state.get("quit_requested"):
   return None
  if selected==0:
   return show_name_entry(scene,None,1,10,"",1)
- if 1<=selected<=len(PRESET_NAMES):
-  return PRESET_NAMES[selected-1]
+ if 1<=selected<=len(presets):
+  return presets[selected-1]
  return None
 
 def show_name_entry(scene:Any,helptext:str|None=None,minlength:int=1,maxlength:int=10,initial:str='',subject:int=0):
