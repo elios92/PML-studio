@@ -372,10 +372,13 @@ func patchRuntimeButtonEventScene(data []byte) ([]byte, error) {
 	}
 	lineStart := strings.LastIndex(text[:pos], "\n") + 1
 	indent := text[lineStart:pos]
-	nextMarker := "\n" + indent + "if "
-	nextRel := strings.Index(text[pos+len(marker):], nextMarker)
+	// The next statement in the v20.1 runtime is an assignment (show_map = ...),
+	// not an if. Stopping at the next "if" used to delete that assignment and
+	// later crash with NameError: show_map is not defined.
+	boundary := "\n" + indent + "show_map = "
+	nextRel := strings.Index(text[pos+len(marker):], boundary)
 	if nextRel < 0 {
-		return nil, fmt.Errorf("runtime map_scene.py: fine blocco ButtonEventScene non trovata")
+		return nil, fmt.Errorf("runtime map_scene.py: fine blocco ButtonEventScene/show_map non trovata")
 	}
 	end := pos + len(marker) + nextRel
 	replacement := marker + "\n" + indent + "    from game.controls_help import show_controls_help\n" +
