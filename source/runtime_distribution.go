@@ -1366,6 +1366,12 @@ func installRuntimeCore(dest, projectName string) (releaseExe, debugExe string, 
 	if err := installRuntimeUICompatibilityPatch(dest); err != nil {
 		return "", "", err
 	}
+	// The official v20.1 Hotfixes plugin is a known compatibility profile.
+	// Port its semantics into the Python runtime only when the complete official
+	// 1.0.7 file set has been verified by hash.
+	if err := installEssentialsV201HotfixRuntime(dest); err != nil {
+		return "", "", fmt.Errorf("integrazione v20.1 Hotfixes: %w", err)
+	}
 
 	base := safeGameExecutableBaseName(projectName)
 	releaseExe = base + ".exe"
