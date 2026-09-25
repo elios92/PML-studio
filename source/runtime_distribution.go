@@ -640,6 +640,8 @@ func installRuntimeUICompatibilityPatch(dest string) error {
     "fullscreen": ("Schermo intero", (0, 0), True),
 }`), 1)
 	optionsData = bytes.Replace(optionsData, []byte(`"window_mode": "window_1336"`), []byte(`"window_mode": "essentials_1x"`), 1)
+	optionsData = bytes.Replace(optionsData, []byte(`settings["window_mode"] = "window_1336"`), []byte(`settings["window_mode"] = "essentials_1x"`), 1)
+	optionsData = bytes.Replace(optionsData, []byte(`settings.get("window_mode", "window_800")`), []byte(`settings.get("window_mode", "essentials_1x")`), 1)
 	optionsData = bytes.Replace(optionsData, []byte(`WINDOW_PRESETS.get(mode, WINDOW_PRESETS["window_1336"])`), []byte(`WINDOW_PRESETS.get(mode, WINDOW_PRESETS["essentials_1x"])`), 1)
 	optionsData = bytes.Replace(optionsData, []byte("\"text_entry\": \"keyboard\","), []byte("\"text_entry\": \"cursor\","), 1)
 	optionsData = bytes.Replace(optionsData, []byte("\"language\": \"it\","), []byte(fmt.Sprintf("\"language\": %q,", sourceLanguage)), 1)
