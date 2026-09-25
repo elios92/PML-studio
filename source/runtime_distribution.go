@@ -214,6 +214,16 @@ def show_controls_help(graphics: Any, project_root: Path) -> None:
         "Keyboard and controller controls are fully customizable in Game Settings."
     )
 
+    logical = original.copy()
+    text_font = _font(root, 22)
+    left = 128
+    top = 118
+    width = 342
+    line_h = text_font.get_height() + 3
+    for line in _wrap(text_font, message, width):
+        logical.blit(text_font.render(line, True, (72, 72, 72)), (left, top))
+        top += line_h
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -223,28 +233,12 @@ def show_controls_help(graphics: Any, project_root: Path) -> None:
 
         screen = graphics.screen
         sw, sh = screen.get_size()
-        screen.fill((0, 0, 0))
-        ow, oh = original.get_size()
-
-        # Keep the imported Essentials board intact. For this compatibility
-        # phase there is no arbitrary responsive stretching.
-        scale = min(sw / ow, sh / oh)
-        if scale >= 1.0:
-            scale = max(1.0, float(int(scale)))
-        dw, dh = max(1, round(ow * scale)), max(1, round(oh * scale))
-        surface = original if (dw, dh) == (ow, oh) else pygame.transform.scale(original, (dw, dh))
+        scale = max(1, int(min(sw / 512.0, sh / 384.0)))
+        dw, dh = 512 * scale, 384 * scale
+        surface = logical if scale == 1 else pygame.transform.scale(logical, (dw, dh))
         ox, oy = (sw - dw) // 2, (sh - dh) // 2
+        screen.fill((0, 0, 0))
         screen.blit(surface, (ox, oy))
-
-        logical_scale = dw / 512.0
-        text_font = _font(root, max(16, round(22 * logical_scale)))
-        left = ox + round(128 * logical_scale)
-        top = oy + round(118 * logical_scale)
-        width = max(120, dw - round(170 * logical_scale))
-        line_h = text_font.get_height() + max(2, round(3 * logical_scale))
-        for line in _wrap(text_font, message, width):
-            screen.blit(text_font.render(line, True, (72, 72, 72)), (left, top))
-            top += line_h
         graphics.update()
 `
 
@@ -278,8 +272,8 @@ def _txt(dst,font,text,x,y,center=False):
  dst.blit(a,(x+2,y+2));dst.blit(b,(x,y))
 
 def _present(graphics,canvas):
- s=graphics.screen; w,h=s.get_size(); k=min(w/512,h/384); dw,dh=round(512*k),round(384*k)
- img=canvas if (dw,dh)==(512,384) else pygame.transform.scale(canvas,(dw,dh))
+ s=graphics.screen; w,h=s.get_size(); k=max(1,int(min(w/512.0,h/384.0))); dw,dh=512*k,384*k
+ img=canvas if k==1 else pygame.transform.scale(canvas,(dw,dh))
  s.fill((0,0,0));s.blit(img,((w-dw)//2,(h-dh)//2));graphics.update()
 
 def _player(scene,canvas,assets):
@@ -475,8 +469,61 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	}
 	patched = bytes.Replace(patched, oldMessageJoin, newMessageJoin, 1)
 
+	oldPictures := []byte(`    def _draw_pictures(self) -> None:
+        sw, sh = self.graphics.screen.get_size()
+        for picture_id in sorted(self.pictures):
+            picture = self.pictures[picture_id]
+            self._update_picture_motion(picture, pygame.time.get_ticks())
+            path = self.picture_catalog.find(picture["name"])
+            if path is None:
+                continue
+            source = load_image(path)
+            scale_x = sw / 512 * picture.get("zoom_x", 100) / 100
+            scale_y = sh / 384 * picture.get("zoom_y", 100) / 100
+            image = pygame.transform.smoothscale(
+                source,
+                (max(1, int(source.get_width() * scale_x)), max(1, int(source.get_height() * scale_y))),
+            ).copy()
+            image.set_alpha(int(picture.get("opacity", 255)))
+            x = int(picture.get("x", 0) * sw / 512)
+            y = int(picture.get("y", 0) * sh / 384)
+            if picture.get("origin", 0) == 1:
+                x -= image.get_width() // 2
+                y -= image.get_height() // 2
+            self.graphics.screen.blit(image, (x, y))`)
+	newPictures := []byte(`    def _draw_pictures(self) -> None:
+        sw, sh = self.graphics.screen.get_size()
+        ui_scale = max(1, int(min(sw / 512.0, sh / 384.0)))
+        viewport_w, viewport_h = 512 * ui_scale, 384 * ui_scale
+        viewport_x = (sw - viewport_w) // 2
+        viewport_y = (sh - viewport_h) // 2
+        for picture_id in sorted(self.pictures):
+            picture = self.pictures[picture_id]
+            self._update_picture_motion(picture, pygame.time.get_ticks())
+            path = self.picture_catalog.find(picture["name"])
+            if path is None:
+                continue
+            source = load_image(path)
+            scale_x = ui_scale * picture.get("zoom_x", 100) / 100
+            scale_y = ui_scale * picture.get("zoom_y", 100) / 100
+            image = pygame.transform.scale(
+                source,
+                (max(1, int(source.get_width() * scale_x)), max(1, int(source.get_height() * scale_y))),
+            ).copy()
+            image.set_alpha(int(picture.get("opacity", 255)))
+            x = viewport_x + int(picture.get("x", 0) * ui_scale)
+            y = viewport_y + int(picture.get("y", 0) * ui_scale)
+            if picture.get("origin", 0) == 1:
+                x -= image.get_width() // 2
+                y -= image.get_height() // 2
+            self.graphics.screen.blit(image, (x, y))`)
+	if !bytes.Contains(patched, oldPictures) {
+		return fmt.Errorf("runtime map_scene.py: renderer Pictures non trovato")
+	}
+	patched = bytes.Replace(patched, oldPictures, newPictures, 1)
+
 	oldChoiceStart := []byte("    def _show_choices(self, choices: list[str]) -> int:\n        if not choices:\n            return -1\n        selected = 0\n        font_path = self.project_root / \"assets\" / \"Fonts\" / \"power clear.ttf\"")
-	newChoiceStart := []byte("    def _show_choices(self, choices: list[str]) -> int:\n        if not choices:\n            return -1\n        from game.options_system import event_action\n        selected = 0\n        font_path = self.project_root / \"assets\" / \"Fonts\" / \"power green.ttf\"")
+	newChoiceStart := []byte("    def _show_choices(self, choices: list[str]) -> int:\n        if not choices:\n            return -1\n        from game.options_system import event_action\n        selected = 0\n        sw, sh = self.graphics.screen.get_size()\n        ui_scale = max(1, int(min(sw / 512.0, sh / 384.0)))\n        viewport_w, viewport_h = 512 * ui_scale, 384 * ui_scale\n        viewport_x = (sw - viewport_w) // 2\n        viewport_y = (sh - viewport_h) // 2\n        font_path = self.project_root / \"assets\" / \"Fonts\" / \"power green.ttf\"")
 	if !bytes.Contains(patched, oldChoiceStart) {
 		return fmt.Errorf("runtime map_scene.py: finestra scelte non trovata")
 	}
@@ -513,6 +560,14 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	}
 	patched = bytes.Replace(patched, oldChoiceInput, newChoiceInput, 1)
 
+	patched = bytes.Replace(patched, []byte(`        font = pygame.font.Font(str(font_path) if font_path.is_file() else None, 27)`), []byte(`        font = pygame.font.Font(str(font_path) if font_path.is_file() else None, 27 * ui_scale)`), 1)
+	patched = bytes.Replace(patched, []byte(`            width = max(260, max(font.size(str(choice))[0] for choice in choices) + 65)
+            panel = pygame.Rect(self.graphics.screen.get_width() - width - 35, 35, width, 25 + len(choices) * 38)`), []byte(`            width = max(260 * ui_scale, max(font.size(str(choice))[0] for choice in choices) + 65 * ui_scale)
+            panel = pygame.Rect(viewport_x + viewport_w - width - 35 * ui_scale, viewport_y + 35 * ui_scale, width, 25 * ui_scale + len(choices) * 38 * ui_scale)`), 1)
+	patched = bytes.Replace(patched, []byte(`                y = panel.y + 16 + row * 38`), []byte(`                y = panel.y + 16 * ui_scale + row * 38 * ui_scale`), 1)
+	patched = bytes.Replace(patched, []byte(`                    pygame.draw.rect(self.graphics.screen, (90, 155, 210), (panel.x + 12, y - 3, panel.width - 24, 33), border_radius=4)`), []byte(`                    pygame.draw.rect(self.graphics.screen, (90, 155, 210), (panel.x + 12 * ui_scale, y - 3 * ui_scale, panel.width - 24 * ui_scale, 33 * ui_scale), border_radius=4 * ui_scale)`), 1)
+	patched = bytes.Replace(patched, []byte(`                self.graphics.screen.blit(font.render(str(choice), True, (25, 35, 50)), (panel.x + 28, y))`), []byte(`                self.graphics.screen.blit(font.render(str(choice), True, (25, 35, 50)), (panel.x + 28 * ui_scale, y))`), 1)
+
 	if err := writeBytesAtomic(mapPath, patched, 0644); err != nil {
 		return fmt.Errorf("aggiornamento UI eventi runtime: %w", err)
 	}
@@ -523,14 +578,14 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return fmt.Errorf("lettura options_dialogue.py: %w", err)
 	}
 	oldHeader := []byte("def show_dialogue_with_speed(scene: Any, text: str) -> None:\n    from game.dialogue_layout import dialogue_pages\n\n    background = scene.graphics.screen.copy()\n    font = _font(scene)\n    screen = scene.graphics.screen\n    options = scene.game_state.get(\"message_options\", {})")
-	newHeader := []byte("def show_dialogue_with_speed(scene: Any, text: str) -> None:\n    import re\n    from game.dialogue_layout import dialogue_pages\n\n    linecount = 3\n    match = re.search(r\"\\\\l\\[(\\d+)\\]\", str(text), re.I)\n    if match:\n        linecount = max(1, int(match.group(1)))\n    centered = \"<ac>\" in str(text).lower()\n    text = re.sub(r\"\\\\l\\[\\d+\\]\", \"\", str(text), flags=re.I)\n    text = re.sub(r\"\\\\c\\[\\d+\\]\", \"\", text, flags=re.I)\n    text = re.sub(r\"</?ac>\", \"\", text, flags=re.I)\n    text = text.replace(\"\\\\b\", \"\").replace(\"\\\\r\", \"\")\n\n    background = scene.graphics.screen.copy()\n    screen = scene.graphics.screen\n    ui_scale = min(screen.get_width() / 512.0, screen.get_height() / 384.0)\n    font_path = scene.project_root / \"assets\" / \"Fonts\" / \"power green.ttf\"\n    font = pygame.font.Font(str(font_path) if font_path.is_file() else None, max(12, round(27 * ui_scale)))\n    options = scene.game_state.get(\"message_options\", {})")
+	newHeader := []byte("def show_dialogue_with_speed(scene: Any, text: str) -> None:\n    import re\n    from game.dialogue_layout import dialogue_pages\n\n    linecount = 3\n    match = re.search(r\"\\\\l\\[(\\d+)\\]\", str(text), re.I)\n    if match:\n        linecount = max(1, int(match.group(1)))\n    centered = \"<ac>\" in str(text).lower()\n    text = re.sub(r\"\\\\l\\[\\d+\\]\", \"\", str(text), flags=re.I)\n    text = re.sub(r\"\\\\c\\[\\d+\\]\", \"\", text, flags=re.I)\n    text = re.sub(r\"</?ac>\", \"\", text, flags=re.I)\n    text = text.replace(\"\\\\b\", \"\").replace(\"\\\\r\", \"\")\n\n    scene._render_world()\n    background = scene.graphics.screen.copy()\n    screen = scene.graphics.screen\n    ui_scale = max(1, int(min(screen.get_width() / 512.0, screen.get_height() / 384.0)))\n    viewport_w, viewport_h = 512 * ui_scale, 384 * ui_scale\n    viewport_x = (screen.get_width() - viewport_w) // 2\n    viewport_y = (screen.get_height() - viewport_h) // 2\n    font_path = scene.project_root / \"assets\" / \"Fonts\" / \"power green.ttf\"\n    font = pygame.font.Font(str(font_path) if font_path.is_file() else None, 27 * ui_scale)\n    options = scene.game_state.get(\"message_options\", {})")
 	if !bytes.Contains(dialogue, oldHeader) {
 		return fmt.Errorf("runtime options_dialogue.py: parser messaggi non trovato")
 	}
 	dialogue = bytes.Replace(dialogue, oldHeader, newHeader, 1)
 	dialogue = bytes.Replace(dialogue, []byte("    height = 130"), []byte("    framed = int(options.get(\"frame\", 0)) == 0\n    line_height = max(1, round(31 * ui_scale))\n    height = min(screen.get_height(), max(round(64 * ui_scale), linecount * line_height + (round(32 * ui_scale) if framed else 0)))"), 1)
 	dialogue = bytes.Replace(dialogue, []byte("    pages = dialogue_pages(text, font, box.width - 44)"), []byte("    pages = [text.split(\"\\n\")] if centered else dialogue_pages(text, font, box.width - round(44 * ui_scale), rows=linecount)"), 1)
-	dialogue = bytes.Replace(dialogue, []byte("    y = (\n        35 if position == 0\n        else (screen.get_height() - height) // 2 if position == 1\n        else screen.get_height() - 165\n    )\n    box = pygame.Rect(35, y, screen.get_width() - 70, height)"), []byte("    y = (\n        round(35 * ui_scale) if position == 0\n        else (screen.get_height() - height) // 2 if position == 1\n        else screen.get_height() - height - round(35 * ui_scale)\n    )\n    margin = round(35 * ui_scale)\n    box = pygame.Rect(margin, y, screen.get_width() - (margin * 2), height)"), 1)
+	dialogue = bytes.Replace(dialogue, []byte("    y = (\n        35 if position == 0\n        else (screen.get_height() - height) // 2 if position == 1\n        else screen.get_height() - 165\n    )\n    box = pygame.Rect(35, y, screen.get_width() - 70, height)"), []byte("    y = (\n        viewport_y + 35 * ui_scale if position == 0\n        else viewport_y + (viewport_h - height) // 2 if position == 1\n        else viewport_y + viewport_h - height - 35 * ui_scale\n    )\n    margin = 35 * ui_scale\n    box = pygame.Rect(viewport_x + margin, y, viewport_w - (margin * 2), height)"), 1)
 	dialogue = bytes.Replace(dialogue, []byte("            framed = int(options.get(\"frame\", 0)) == 0\n            if framed:"), []byte("            if framed:"), 1)
 	oldDraw := []byte("                if not framed:\n                    screen.blit(\n                        font.render(shown, True, (0, 0, 0)),\n                        (box.x + 23, box.y + 21 + row * 31),\n                    )\n                rendered = font.render(\n                    shown, True, (25, 35, 50) if framed else (255, 255, 255)\n                )\n                screen.blit(rendered, (box.x + 22, box.y + 20 + row * 31))")
 	newDraw := []byte("                main = (80, 80, 88) if framed else (248, 248, 248)\n                shadow = (160, 160, 168) if framed else (72, 80, 88)\n                rendered_shadow = font.render(shown, True, shadow)\n                rendered = font.render(shown, True, main)\n                tx = box.centerx - rendered.get_width() // 2 if centered else box.x + round(22 * ui_scale)\n                ty = box.y + round(20 * ui_scale) + row * line_height\n                shadow_offset = max(1, round(2 * ui_scale))\n                screen.blit(rendered_shadow, (tx + shadow_offset, ty + shadow_offset))\n                screen.blit(rendered, (tx, ty))")
@@ -548,6 +603,23 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return fmt.Errorf("lettura options_system.py: %w", err)
 	}
 	sourceLanguage := convertedEssentialsLanguage(dest)
+	optionsData = bytes.Replace(optionsData, []byte(`WINDOW_PRESETS = {
+    "window_1336": ("Finestra — 1336×1000", (1336, 1000), False),
+    "gba_1x": ("GBA 1x — 240×160", (240, 160), False),
+    "gba_2x": ("GBA 2x — 480×320", (480, 320), False),
+    "gba_3x": ("GBA 3x — 720×480", (720, 480), False),
+    "gba_4x": ("GBA 4x — 960×640", (960, 640), False),
+    "window_800": ("Finestra — 800×600", (800, 600), False),
+    "window_1024": ("Finestra — 1024×768", (1024, 768), False),
+    "window_1280": ("Finestra — 1280×960", (1280, 960), False),
+    "fullscreen": ("Schermo intero", (0, 0), True),
+}`), []byte(`WINDOW_PRESETS = {
+    "essentials_1x": ("Essentials 1x — 512×384", (512, 384), False),
+    "essentials_2x": ("Essentials 2x — 1024×768", (1024, 768), False),
+    "fullscreen": ("Schermo intero", (0, 0), True),
+}`), 1)
+	optionsData = bytes.Replace(optionsData, []byte(`"window_mode": "window_1336"`), []byte(`"window_mode": "essentials_1x"`), 1)
+	optionsData = bytes.Replace(optionsData, []byte(`WINDOW_PRESETS.get(mode, WINDOW_PRESETS["window_1336"])`), []byte(`WINDOW_PRESETS.get(mode, WINDOW_PRESETS["essentials_1x"])`), 1)
 	optionsData = bytes.Replace(optionsData, []byte("\"text_entry\": \"keyboard\","), []byte("\"text_entry\": \"cursor\","), 1)
 	optionsData = bytes.Replace(optionsData, []byte("\"language\": \"it\","), []byte(fmt.Sprintf("\"language\": %q,", sourceLanguage)), 1)
 	optionsData = bytes.Replace(optionsData, []byte(`    return ["it"]`), []byte(fmt.Sprintf(`    return [%q]`, sourceLanguage)), 1)
@@ -563,6 +635,7 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return fmt.Errorf("lettura config/options.json: %w", err)
 	}
 	configData = bytes.Replace(configData, []byte("\"text_entry\": \"keyboard\""), []byte("\"text_entry\": \"cursor\""), 1)
+	configData = bytes.Replace(configData, []byte("\"window_mode\": \"window_1336\""), []byte("\"window_mode\": \"essentials_1x\""), 1)
 	configData = bytes.Replace(configData, []byte("\"language\": \"it\""), []byte(fmt.Sprintf("\"language\": %q", sourceLanguage)), 1)
 	if err := writeBytesAtomic(configPath, configData, 0644); err != nil {
 		return fmt.Errorf("aggiornamento config Text Entry: %w", err)
