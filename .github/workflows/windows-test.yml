@@ -4,6 +4,12 @@ name: Windows baseline validation
 # disabled so development commits never start Actions or send run emails.
 on:
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: "Publish release after successful validation"
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   test-build:
@@ -11,6 +17,8 @@ jobs:
     defaults:
       run:
         working-directory: source
+    permissions:
+      contents: write
     env:
       GOOS: windows
       GOARCH: amd64
@@ -60,3 +68,20 @@ jobs:
           name: PML-Studio-Windows-x64
           path: PML Studio.exe
           if-no-files-found: error
+
+      - name: Prepare release assets
+        if: ${{ inputs.publish_release }}
+        shell: pwsh
+        run: |
+          Copy-Item -LiteralPath "..\PML Studio.exe" -Destination "..\PML.Studio.exe" -Force
+          (Get-FileHash -Algorithm SHA256 -LiteralPath "..\PML.Studio.exe").Hash.ToLowerInvariant() + "  PML.Studio.exe" | Set-Content -Encoding ascii "..\PML.Studio.exe.sha256"
+
+      - name: Publish release
+        if: ${{ inputs.publish_release }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Get-Content -Raw "version.txt").Trim()
+          $tag = "v" + $version
+          gh release create $tag "..\PML.Studio.exe" "..\PML.Studio.exe.sha256" --target "${{ github.sha }}" --title "PML Studio $tag" --generate-notes
