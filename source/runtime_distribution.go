@@ -317,7 +317,6 @@ def show_name_entry(scene:Any,helptext:str|None=None,minlength:int=1,maxlength:i
    action=event_action(root,e)
    if action=='cancel':
     if val:val=val[:-1]
-    elif minlength==0:return ''
     continue
    if e.type==pygame.KEYDOWN and e.key==pygame.K_TAB:mode=(mode+1)%4;continue
    if action in ('left','right','up','down'):
@@ -431,7 +430,8 @@ func installRuntimeUICompatibilityPatch(dest string) error {
             from game.name_entry_scene import show_name_entry
             args = entry.group(2)
             quoted = re.findall(r'["\']([^"\']*)["\']', args)
-            numbers = re.findall(r'(?<![A-Za-z_])-?\d+', args)
+            numeric_args = re.sub(r'(["\']).*?\1', '', args)
+            numbers = re.findall(r'(?<![A-Za-z_])-?\d+', numeric_args)
             helptext = quoted[0] if quoted else None
             minlength = int(numbers[0]) if len(numbers) > 0 else 1
             maxlength = int(numbers[1]) if len(numbers) > 1 else 10
@@ -454,17 +454,18 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	if err != nil {
 		return fmt.Errorf("lettura options_dialogue.py: %w", err)
 	}
-	oldHeader := []byte("def show_dialogue_with_speed(scene: Any, text: str) -> None:\n    from game.dialogue_layout import dialogue_pages\n\n    background = scene.graphics.screen.copy()")
-	newHeader := []byte("def show_dialogue_with_speed(scene: Any, text: str) -> None:\n    import re\n    from game.dialogue_layout import dialogue_pages\n\n    linecount = 3\n    match = re.search(r\"\\\\l\\[(\\d+)\\]\", str(text), re.I)\n    if match:\n        linecount = max(1, int(match.group(1)))\n    centered = \"<ac>\" in str(text).lower()\n    text = re.sub(r\"\\\\l\\[\\d+\\]\", \"\", str(text), flags=re.I)\n    text = re.sub(r\"\\\\c\\[\\d+\\]\", \"\", text, flags=re.I)\n    text = re.sub(r\"</?ac>\", \"\", text, flags=re.I)\n    text = text.replace(\"\\\\b\", \"\").replace(\"\\\\r\", \"\")\n\n    background = scene.graphics.screen.copy()")
+	oldHeader := []byte("def show_dialogue_with_speed(scene: Any, text: str) -> None:\n    from game.dialogue_layout import dialogue_pages\n\n    background = scene.graphics.screen.copy()\n    font = _font(scene)\n    screen = scene.graphics.screen\n    options = scene.game_state.get(\"message_options\", {})")
+	newHeader := []byte("def show_dialogue_with_speed(scene: Any, text: str) -> None:\n    import re\n    from game.dialogue_layout import dialogue_pages\n\n    linecount = 3\n    match = re.search(r\"\\\\l\\[(\\d+)\\]\", str(text), re.I)\n    if match:\n        linecount = max(1, int(match.group(1)))\n    centered = \"<ac>\" in str(text).lower()\n    text = re.sub(r\"\\\\l\\[\\d+\\]\", \"\", str(text), flags=re.I)\n    text = re.sub(r\"\\\\c\\[\\d+\\]\", \"\", text, flags=re.I)\n    text = re.sub(r\"</?ac>\", \"\", text, flags=re.I)\n    text = text.replace(\"\\\\b\", \"\").replace(\"\\\\r\", \"\")\n\n    background = scene.graphics.screen.copy()\n    screen = scene.graphics.screen\n    ui_scale = min(screen.get_width() / 512.0, screen.get_height() / 384.0)\n    font_path = scene.project_root / \"assets\" / \"Fonts\" / \"power clear.ttf\"\n    font = pygame.font.Font(str(font_path) if font_path.is_file() else None, max(12, round(27 * ui_scale)))\n    options = scene.game_state.get(\"message_options\", {})")
 	if !bytes.Contains(dialogue, oldHeader) {
 		return fmt.Errorf("runtime options_dialogue.py: parser messaggi non trovato")
 	}
 	dialogue = bytes.Replace(dialogue, oldHeader, newHeader, 1)
-	dialogue = bytes.Replace(dialogue, []byte("    height = 130"), []byte("    framed = int(options.get(\"frame\", 0)) == 0\n    height = min(screen.get_height(), max(64, linecount * 32 + (32 if framed else 0)))"), 1)
-	dialogue = bytes.Replace(dialogue, []byte("    pages = dialogue_pages(text, font, box.width - 44)"), []byte("    pages = [text.split(\"\\n\")] if centered else dialogue_pages(text, font, box.width - 44, rows=linecount)"), 1)
+	dialogue = bytes.Replace(dialogue, []byte("    height = 130"), []byte("    framed = int(options.get(\"frame\", 0)) == 0\n    line_height = max(1, round(31 * ui_scale))\n    height = min(screen.get_height(), max(round(64 * ui_scale), linecount * line_height + (round(32 * ui_scale) if framed else 0)))"), 1)
+	dialogue = bytes.Replace(dialogue, []byte("    pages = dialogue_pages(text, font, box.width - 44)"), []byte("    pages = [text.split(\"\\n\")] if centered else dialogue_pages(text, font, box.width - round(44 * ui_scale), rows=linecount)"), 1)
+	dialogue = bytes.Replace(dialogue, []byte("    y = (\n        35 if position == 0\n        else (screen.get_height() - height) // 2 if position == 1\n        else screen.get_height() - 165\n    )\n    box = pygame.Rect(35, y, screen.get_width() - 70, height)"), []byte("    y = (\n        round(35 * ui_scale) if position == 0\n        else (screen.get_height() - height) // 2 if position == 1\n        else screen.get_height() - height - round(35 * ui_scale)\n    )\n    margin = round(35 * ui_scale)\n    box = pygame.Rect(margin, y, screen.get_width() - (margin * 2), height)"), 1)
 	dialogue = bytes.Replace(dialogue, []byte("            framed = int(options.get(\"frame\", 0)) == 0\n            if framed:"), []byte("            if framed:"), 1)
 	oldDraw := []byte("                if not framed:\n                    screen.blit(\n                        font.render(shown, True, (0, 0, 0)),\n                        (box.x + 23, box.y + 21 + row * 31),\n                    )\n                rendered = font.render(\n                    shown, True, (25, 35, 50) if framed else (255, 255, 255)\n                )\n                screen.blit(rendered, (box.x + 22, box.y + 20 + row * 31))")
-	newDraw := []byte("                main = (80, 80, 88) if framed else (248, 248, 248)\n                shadow = (160, 160, 168) if framed else (72, 80, 88)\n                rendered_shadow = font.render(shown, True, shadow)\n                rendered = font.render(shown, True, main)\n                tx = box.centerx - rendered.get_width() // 2 if centered else box.x + 22\n                ty = box.y + 20 + row * 31\n                screen.blit(rendered_shadow, (tx + 2, ty + 2))\n                screen.blit(rendered, (tx, ty))")
+	newDraw := []byte("                main = (80, 80, 88) if framed else (248, 248, 248)\n                shadow = (160, 160, 168) if framed else (72, 80, 88)\n                rendered_shadow = font.render(shown, True, shadow)\n                rendered = font.render(shown, True, main)\n                tx = box.centerx - rendered.get_width() // 2 if centered else box.x + round(22 * ui_scale)\n                ty = box.y + round(20 * ui_scale) + row * line_height\n                shadow_offset = max(1, round(2 * ui_scale))\n                screen.blit(rendered_shadow, (tx + shadow_offset, ty + shadow_offset))\n                screen.blit(rendered, (tx, ty))")
 	if !bytes.Contains(dialogue, oldDraw) {
 		return fmt.Errorf("runtime options_dialogue.py: renderer testo non trovato")
 	}
