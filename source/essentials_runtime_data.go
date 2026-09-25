@@ -206,6 +206,37 @@ func convertTilesetsForRuntime(sourceRX, destRoot string) (int, int, error) {
 	return count, len(aliases), nil
 }
 
+func detectEssentialsProjectLanguage(rows []any) string {
+	// Pokémon Essentials v20.1 uses English as its base catalog. Translated
+	// projects keep the English ScriptTexts keys and replace their values.
+	// Detect the two languages currently required by the PML compatibility
+	// layer without using the Windows/system locale, which would change the
+	// imported game's language.
+	if len(rows) > 24 {
+		if scripts, ok := rows[24].(map[string]any); ok {
+			probes := map[string][]string{
+				"Yes":        {"sì", "si"},
+				"Cancel":     {"annulla"},
+				"New Game":   {"nuova partita", "nuovo gioco"},
+				"Your name?": {"il tuo nome?", "come ti chiami?"},
+			}
+			for key, italianValues := range probes {
+				value, ok := scripts[key].(string)
+				if !ok {
+					continue
+				}
+				normalized := strings.ToLower(strings.TrimSpace(value))
+				for _, italian := range italianValues {
+					if normalized == italian {
+						return "it"
+					}
+				}
+			}
+		}
+	}
+	return "en"
+}
+
 func convertMessagesForRuntime(sourceDAT, destRoot string) error {
 	value, err := decodeRubyMarshalFile(sourceDAT)
 	if err != nil {
@@ -217,9 +248,10 @@ func convertMessagesForRuntime(sourceDAT, destRoot string) error {
 		return fmt.Errorf("messages.dat: struttura inattesa, atteso Array")
 	}
 	payload := map[string]any{
-		"format":        "pokemon-essentials-v20.1-messages",
-		"source":        "messages.dat",
-		"message_types": rows,
+		"format":            "pokemon-essentials-v20.1-messages",
+		"source":            "messages.dat",
+		"detected_language": detectEssentialsProjectLanguage(rows),
+		"message_types":     rows,
 	}
 	return writeJSON(filepath.Join(destRoot, "converted", "messages.json"), payload)
 }
