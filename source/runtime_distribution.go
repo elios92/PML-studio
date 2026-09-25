@@ -146,6 +146,19 @@ func readEmbeddedRuntimeFile(archiveName string) ([]byte, error) {
 	return nil, fmt.Errorf("template runtime mancante nell'archivio: %s", wanted)
 }
 
+func normalizeRuntimeCanonicalPBSPaths(data []byte) []byte {
+	replacements := [][2][]byte{
+		{[]byte(`root/"PBS"`), []byte(`root/"converted"/"PBS"`)},
+		{[]byte(`root / "PBS"`), []byte(`root / "converted" / "PBS"`)},
+		{[]byte(`project_root / "PBS"`), []byte(`project_root / "converted" / "PBS"`)},
+		{[]byte(`self.project_root / "PBS"`), []byte(`self.project_root / "converted" / "PBS"`)},
+	}
+	for _, pair := range replacements {
+		data = bytes.ReplaceAll(data, pair[0], pair[1])
+	}
+	return data
+}
+
 func installRuntimeCore(dest, projectName string) (releaseExe, debugExe string, err error) {
 	if len(plmRuntimeCoreZip) == 0 {
 		return "", "", fmt.Errorf("template runtime PLM non incorporato")
@@ -203,6 +216,14 @@ func installRuntimeCore(dest, projectName string) (releaseExe, debugExe string, 
 		}
 		if isRuntimeTextFile(target) && bytes.Contains(data, []byte(runtimeProjectTitlePlaceholder)) {
 			data = bytes.ReplaceAll(data, []byte(runtimeProjectTitlePlaceholder), []byte(projectName))
+		}
+		// converted/PBS is the single canonical PBS tree for PLM projects.
+		// Older runtime templates still referenced a root-level PBS folder,
+		// which made New Game fail immediately although conversion had correctly
+		// preserved the source PBS under converted/PBS. Normalize those legacy
+		// Python paths while installing the embedded runtime; do not duplicate PBS.
+		if strings.EqualFold(filepath.Ext(target), ".py") {
+			data = normalizeRuntimeCanonicalPBSPaths(data)
 		}
 		mode := os.FileMode(0644)
 		if strings.EqualFold(filepath.Ext(target), ".exe") {
