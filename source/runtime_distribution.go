@@ -522,6 +522,27 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	}
 	patched = bytes.Replace(patched, oldPictures, newPictures, 1)
 
+	// RMXP/Essentials Pictures are screen overlays: map tone/day-night affects
+	// the world below them, not the Picture itself. helpadventurebg relies on
+	// this exact ordering after pbToneChangeAll darkens the map.
+	oldPictureOrder := []byte(`        self._draw_pictures()
+        tone = self.game_state.get("screen_tone")`)
+	newPictureOrder := []byte(`        tone = self.game_state.get("screen_tone")`)
+	if !bytes.Contains(patched, oldPictureOrder) {
+		return fmt.Errorf("runtime map_scene.py: ordine Pictures/tone non trovato")
+	}
+	patched = bytes.Replace(patched, oldPictureOrder, newPictureOrder, 1)
+
+	oldWeatherOrder := []byte(`        self._draw_overworld_weather()
+        if pygame.time.get_ticks() < int(self.game_state.get("flash_until", 0)):`)
+	newWeatherOrder := []byte(`        self._draw_overworld_weather()
+        self._draw_pictures()
+        if pygame.time.get_ticks() < int(self.game_state.get("flash_until", 0)):`)
+	if !bytes.Contains(patched, oldWeatherOrder) {
+		return fmt.Errorf("runtime map_scene.py: punto overlay Pictures non trovato")
+	}
+	patched = bytes.Replace(patched, oldWeatherOrder, newWeatherOrder, 1)
+
 	oldChoiceStart := []byte("    def _show_choices(self, choices: list[str]) -> int:\n        if not choices:\n            return -1\n        selected = 0\n        font_path = self.project_root / \"assets\" / \"Fonts\" / \"power clear.ttf\"")
 	newChoiceStart := []byte("    def _show_choices(self, choices: list[str]) -> int:\n        if not choices:\n            return -1\n        from game.options_system import event_action\n        selected = 0\n        sw, sh = self.graphics.screen.get_size()\n        ui_scale = max(1, int(min(sw / 512.0, sh / 384.0)))\n        viewport_w, viewport_h = 512 * ui_scale, 384 * ui_scale\n        viewport_x = (sw - viewport_w) // 2\n        viewport_y = (sh - viewport_h) // 2\n        font_path = self.project_root / \"assets\" / \"Fonts\" / \"power green.ttf\"")
 	if !bytes.Contains(patched, oldChoiceStart) {
