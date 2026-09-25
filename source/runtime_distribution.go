@@ -828,6 +828,12 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	if err := writeBytesAtomic(nameEntryPath, []byte(runtimeNameEntryPython), 0644); err != nil {
 		return fmt.Errorf("installazione UI Naming Essentials: %w", err)
 	}
+	if err := writeBytesAtomic(filepath.Join(dest, "game", "essentials_ui.py"), []byte(runtimeEssentialsUIPython), 0644); err != nil {
+		return fmt.Errorf("installazione renderer UI Essentials: %w", err)
+	}
+	if err := writeBytesAtomic(filepath.Join(dest, "game", "essentials_title_ui.py"), []byte(runtimeEssentialsTitleUIPython), 0644); err != nil {
+		return fmt.Errorf("installazione UI titolo Essentials: %w", err)
+	}
 
 	mapPath := filepath.Join(dest, "game", "map_scene.py")
 	data, err := os.ReadFile(mapPath)
