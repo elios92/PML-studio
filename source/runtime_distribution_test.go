@@ -181,6 +181,10 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         "viewport_w, viewport_h = 512 * ui_scale, 384 * ui_scale",
         "path = self.picture_catalog.find(picture[\"name\"])",
         "pygame.transform.scale(",
+        "show_map = re.search",
+        `load_windowskin(self.project_root, "menu"`,
+        "draw_windowskin(logical, skin",
+        `self.game_state.get("_last_message_rect")`,
     } {
         if !strings.Contains(mapText, want) {
             t.Fatalf("patched map scene missing %q", want)
@@ -188,6 +192,9 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
     }
     if strings.Contains(mapText, `prompt_text(self.graphics, "Come ti chiami?"`) {
         t.Fatal("pbTrainerName still uses the generic text prompt")
+    }
+    if strings.Contains(mapText, "border_radius=8") {
+        t.Fatal("generic rounded PML choice panel survived instead of Essentials menu windowskin")
     }
     toneIndex := strings.Index(mapText, `tone = self.game_state.get("screen_tone")`)
     weatherIndex := strings.Index(mapText, `self._draw_overworld_weather()`)
@@ -213,6 +220,8 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         "linecount*32",
         "blit_logical_overlay",
         "power green.ttf",
+        `scene.game_state["_last_message_rect"]`,
+        "draw_windowskin(logical,skin,box)",
     } {
         if !strings.Contains(dialogueText, want) {
             t.Fatalf("Essentials dialogue parser missing %q", want)
@@ -246,6 +255,8 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         "from game.essentials_title_ui import show_splash",
         "from game.essentials_title_ui import title_wait",
         "from game.essentials_title_ui import draw_load_menu",
+        "from game.essentials_title_ui import menu_entries",
+        "from game.essentials_title_ui import choose",
     } {
         if !strings.Contains(titleText, want) {
             t.Fatalf("title scene did not route through Essentials UI: %q", want)
@@ -265,6 +276,9 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         "row*48",
         "_font(scene,27)",
         "present_logical",
+        `intl("New Game")`,
+        `intl("Continue")`,
+        `action=event_action(scene.project_root,event)`,
     } {
         if !strings.Contains(titleUIText, want) {
             t.Fatalf("Essentials load menu geometry missing %q", want)
