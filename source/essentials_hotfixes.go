@@ -21,6 +21,14 @@ var essentialsV201HotfixFiles = []string{
 	"Overworld bug fixes.rb",
 }
 
+var essentialsV201Hotfix107SHA256 = map[string]string{
+	"Battle bug fixes.rb":    "bed1ee609335eaa1479d82ffd63be0e4221d465031b6e452425341ff8cf9fb52",
+	"Compiler bug fixes.rb":  "debb5db01444ce69f04abe02f9634d4a7af9e62229b062f176836e9e189243a4",
+	"Debug bug fixes.rb":     "50fbb577742e5572a389334fa633844539813aa68d9d6769ab90ca92e76ac219",
+	"Misc bug fixes.rb":      "60d31d67c3c30b60ca127d25dc8134e8dd5650881236b823383c644125a8ed7b",
+	"Overworld bug fixes.rb": "b0908b86cf0cc05ccc14f7a923c0ab74c84324577abc860ab85b9430694397c3",
+}
+
 type essentialsHotfixFile struct {
 	Name   string `json:"name"`
 	SHA256 string `json:"sha256"`
@@ -36,6 +44,7 @@ type essentialsHotfixProfile struct {
 	EssentialsVersion string                `json:"essentials_version,omitempty"`
 	SourceRelative    string                `json:"source_relative,omitempty"`
 	NativeProfile     string                `json:"native_profile,omitempty"`
+	ExactOfficial107  bool                  `json:"exact_official_1_0_7"`
 	Files             []essentialsHotfixFile `json:"files,omitempty"`
 	ChangeLog         []string              `json:"change_log,omitempty"`
 }
@@ -121,6 +130,7 @@ func detectEssentialsV201Hotfixes(source string) (essentialsHotfixProfile, error
 		}
 		root := filepath.Dir(metaPath)
 		files := make([]essentialsHotfixFile, 0, len(essentialsV201HotfixFiles))
+		exact107 := strings.EqualFold(version, "1.0.7")
 		for _, name := range essentialsV201HotfixFiles {
 			path := filepath.Join(root, name)
 			info, statErr := os.Stat(path)
@@ -131,6 +141,9 @@ func detectEssentialsV201Hotfixes(source string) (essentialsHotfixProfile, error
 			if hashErr != nil {
 				return profile, hashErr
 			}
+			if wanted := essentialsV201Hotfix107SHA256[name]; wanted == "" || !strings.EqualFold(hash, wanted) {
+				exact107 = false
+			}
 			files = append(files, essentialsHotfixFile{Name: name, SHA256: hash, Size: info.Size()})
 		}
 		rel, _ := filepath.Rel(source, root)
@@ -139,7 +152,10 @@ func detectEssentialsV201Hotfixes(source string) (essentialsHotfixProfile, error
 		profile.PluginVersion = version
 		profile.EssentialsVersion = values["essentials"]
 		profile.SourceRelative = filepath.ToSlash(rel)
-		profile.NativeProfile = essentialsV201HotfixProfile
+		profile.ExactOfficial107 = exact107
+		if exact107 {
+			profile.NativeProfile = essentialsV201HotfixProfile
+		}
 		profile.Files = files
 		profile.ChangeLog = changes
 		return profile, nil
