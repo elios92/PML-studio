@@ -101,7 +101,7 @@ func TestRuntimeNameEntryUsesImportedEssentialsAssets(t *testing.T) {
         "Custom name",
         "scene._show_choices([custom_label,*PRESET_NAMES])",
         "if selected==0:",
-        "return show_name_entry(scene,None,0,10,\"\",1)",
+        "return show_name_entry(scene,None,1,10,\"\",1)",
     } {
         if !strings.Contains(src, want) {
             t.Fatalf("Essentials naming UI missing %q", want)
