@@ -168,6 +168,7 @@ from typing import Any
 import pygame
 
 from game.ui_assets import UIAssets
+from game.options_system import event_action, load_settings, resolved_language
 
 
 def _font(root: Path, size: int) -> pygame.font.Font:
@@ -205,10 +206,8 @@ def show_controls_help(graphics: Any, project_root: Path) -> None:
 
     # The converted project is native PML: fixed legacy key-help content is
     # replaced by a pointer to PML's configurable input settings.
-    language = str(getattr(graphics, "language", "") or "").lower()
-    if not language:
-        language = str(getattr(graphics, "locale", "") or "").lower()
-    italian = language.startswith("it")
+    language = resolved_language(load_settings(root))
+    italian = language == "it"
     message = (
         "I comandi di tastiera e controller sono completamente configurabili nelle Impostazioni di gioco."
         if italian else
@@ -219,7 +218,7 @@ def show_controls_help(graphics: Any, project_root: Path) -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 raise SystemExit(0)
-            if event.type == pygame.KEYDOWN:
+            if event_action(root, event) in ("confirm", "cancel"):
                 return
 
         screen = graphics.screen
@@ -255,6 +254,7 @@ from pathlib import Path
 import pygame
 from game.ui_assets import UIAssets
 from game.message_system import intl
+from game.options_system import event_action
 
 MODES=[
 "ABCDEFGHIJ ,.KLMNOPQRST '-UVWXYZ     ♂♀             0123456789   ",
@@ -311,33 +311,33 @@ def show_name_entry(scene:Any,helptext:str|None=None,minlength:int=1,maxlength:i
   _present(scene.graphics,c)
   for e in pygame.event.get():
    if e.type==pygame.QUIT: scene.game_state['quit_requested']=True; return None
-   if e.type!=pygame.KEYDOWN: continue
-   if e.key==pygame.K_ESCAPE:
+   action=event_action(root,e)
+   if action=='cancel':
     if val:val=val[:-1]
     elif minlength==0:return ''
     continue
-   if e.key==pygame.K_TAB:mode=(mode+1)%4;continue
-   if e.key in (pygame.K_LEFT,pygame.K_RIGHT,pygame.K_UP,pygame.K_DOWN):
+   if e.type==pygame.KEYDOWN and e.key==pygame.K_TAB:mode=(mode+1)%4;continue
+   if action in ('left','right','up','down'):
     if cur<0:
      order=[-6,-5,-4,-3,-2,-1];i=order.index(cur)
-     if e.key==pygame.K_LEFT:cur=order[(i-1)%6]
-     elif e.key==pygame.K_RIGHT:cur=order[(i+1)%6]
-     elif e.key==pygame.K_DOWN:cur={-6:0,-5:2,-4:4,-3:6,-2:9,-1:11}[cur]
+     if action=='left':cur=order[(i-1)%6]
+     elif action=='right':cur=order[(i+1)%6]
+     elif action=='down':cur={-6:0,-5:2,-4:4,-3:6,-2:9,-1:11}[cur]
      else:cur={-6:52,-5:54,-4:56,-3:58,-2:61,-1:63}[cur]
     else:
      row,col=divmod(cur,ROWS)
-     if e.key==pygame.K_LEFT:
+     if action=='left':
       for _ in range(ROWS):
        col=(col-1)%ROWS;p=row*ROWS+col
        if nonempty(p):cur=p;break
-     elif e.key==pygame.K_RIGHT:
+     elif action=='right':
       for _ in range(ROWS):
        col=(col+1)%ROWS;p=row*ROWS+col
        if nonempty(p):cur=p;break
-     elif e.key==pygame.K_UP:cur=(-6 if col<=1 else -5 if col<=3 else -4 if col<=5 else -3 if col<=7 else -2 if col<=10 else -1) if row==0 else (row-1)*ROWS+col
+     elif action=='up':cur=(-6 if col<=1 else -5 if col<=3 else -4 if col<=5 else -3 if col<=7 else -2 if col<=10 else -1) if row==0 else (row-1)*ROWS+col
      else:cur=(-6 if col<=1 else -5 if col<=3 else -4 if col<=5 else -3 if col<=7 else -2 if col<=10 else -1) if row==COLS-1 else (row+1)*ROWS+col
     continue
-   if e.key in (pygame.K_RETURN,pygame.K_KP_ENTER,pygame.K_SPACE):
+   if action=='confirm':
     if cur==-2:val=val[:-1]
     elif cur==-1:
      if len(val)>=minlength:return val
@@ -370,6 +370,25 @@ func patchRuntimeButtonEventScene(data []byte) ([]byte, error) {
 	return []byte(text[:pos] + replacement + text[end:]), nil
 }
 
+func convertedEssentialsLanguage(dest string) string {
+	data, err := os.ReadFile(filepath.Join(dest, "converted", "messages.json"))
+	if err != nil {
+		return "en"
+	}
+	var payload struct {
+		DetectedLanguage string `json:"detected_language"`
+	}
+	if json.Unmarshal(data, &payload) != nil {
+		return "en"
+	}
+	switch strings.ToLower(strings.TrimSpace(payload.DetectedLanguage)) {
+	case "it":
+		return "it"
+	default:
+		return "en"
+	}
+}
+
 func installRuntimeUICompatibilityPatch(dest string) error {
 	controlsPath := filepath.Join(dest, "game", "controls_help.py")
 	if err := writeBytesAtomic(controlsPath, []byte(runtimeControlsHelpPython), 0644); err != nil {
@@ -395,6 +414,34 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return fmt.Errorf("runtime map_scene.py: pbTrainerName non trovato")
 	}
 	patched = bytes.Replace(patched, oldName, newName, 1)
+
+	oldEntry := []byte(`        entry = re.search(r"pbSet\((\d+),\s*pbEnterText", script)
+        if entry:
+            defaults = re.findall(r'"([^"]*)"', script)
+            initial = defaults[-1] if defaults else ""
+            value = prompt_text(self.graphics, defaults[0] if defaults else "Inserisci il testo", initial)
+            if value is not None:
+                self.game_state["variables"][entry.group(1)] = value
+            return`)
+	newEntry := []byte(`        entry = re.search(r"pbSet\((\d+),\s*pbEnterText\((.*)\)\s*\)", script, re.I | re.S)
+        if entry:
+            from game.name_entry_scene import show_name_entry
+            args = entry.group(2)
+            quoted = re.findall(r'["\']([^"\']*)["\']', args)
+            numbers = re.findall(r'(?<![A-Za-z_])-?\d+', args)
+            helptext = quoted[0] if quoted else None
+            minlength = int(numbers[0]) if len(numbers) > 0 else 1
+            maxlength = int(numbers[1]) if len(numbers) > 1 else 10
+            initial = quoted[1] if len(quoted) > 1 else ""
+            value = show_name_entry(self, helptext, minlength, maxlength, initial)
+            if value is not None:
+                self.game_state["variables"][entry.group(1)] = value
+            return`)
+	if !bytes.Contains(patched, oldEntry) {
+		return fmt.Errorf("runtime map_scene.py: pbEnterText non trovato")
+	}
+	patched = bytes.Replace(patched, oldEntry, newEntry, 1)
+
 	if err := writeBytesAtomic(mapPath, patched, 0644); err != nil {
 		return fmt.Errorf("aggiornamento UI eventi runtime: %w", err)
 	}
@@ -428,7 +475,13 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	if err != nil {
 		return fmt.Errorf("lettura options_system.py: %w", err)
 	}
+	sourceLanguage := convertedEssentialsLanguage(dest)
 	optionsData = bytes.Replace(optionsData, []byte("\"text_entry\": \"keyboard\","), []byte("\"text_entry\": \"cursor\","), 1)
+	optionsData = bytes.Replace(optionsData, []byte("\"language\": \"it\","), []byte(fmt.Sprintf("\"language\": %q,", sourceLanguage)), 1)
+	optionsData = bytes.Replace(optionsData, []byte(`    return ["it"]`), []byte(fmt.Sprintf(`    return [%q]`, sourceLanguage)), 1)
+	optionsData = bytes.Replace(optionsData, []byte(`    value = str(settings.get("language", "it")).casefold()`), []byte(fmt.Sprintf(`    value = str(settings.get("language", %q)).casefold()`, sourceLanguage)), 1)
+	optionsData = bytes.Replace(optionsData, []byte(`    return "it" if value == "system" or value not in {"it"} else value`), []byte(fmt.Sprintf(`    return %q if value == "system" or value != %q else value`, sourceLanguage, sourceLanguage)), 1)
+	optionsData = bytes.Replace(optionsData, []byte(`    settings["language"] = "it"`), []byte(fmt.Sprintf(`    settings["language"] = %q`, sourceLanguage)), 1)
 	if err := writeBytesAtomic(optionsPath, optionsData, 0644); err != nil {
 		return fmt.Errorf("aggiornamento Text Entry: %w", err)
 	}
@@ -438,6 +491,7 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return fmt.Errorf("lettura config/options.json: %w", err)
 	}
 	configData = bytes.Replace(configData, []byte("\"text_entry\": \"keyboard\""), []byte("\"text_entry\": \"cursor\""), 1)
+	configData = bytes.Replace(configData, []byte("\"language\": \"it\""), []byte(fmt.Sprintf("\"language\": %q", sourceLanguage)), 1)
 	if err := writeBytesAtomic(configPath, configData, 0644); err != nil {
 		return fmt.Errorf("aggiornamento config Text Entry: %w", err)
 	}
