@@ -1105,32 +1105,6 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	}
 
 	dialoguePath := filepath.Join(dest, "game", "options_dialogue.py")
-	dialogue, err := os.ReadFile(dialoguePath)
-	if err != nil {
-		return fmt.Errorf("lettura options_dialogue.py: %w", err)
-	}
-	oldHeader := []byte("def show_dialogue_with_speed(scene: Any, text: str) -> None:\n    from game.dialogue_layout import dialogue_pages\n\n    background = scene.graphics.screen.copy()\n    font = _font(scene)\n    screen = scene.graphics.screen\n    options = scene.game_state.get(\"message_options\", {})")
-	newHeader := []byte("def show_dialogue_with_speed(scene: Any, text: str) -> None:\n    import re\n    from game.dialogue_layout import dialogue_pages\n\n    linecount = 3\n    match = re.search(r\"\\\\l\\[(\\d+)\\]\", str(text), re.I)\n    if match:\n        linecount = max(1, int(match.group(1)))\n    centered = \"<ac>\" in str(text).lower()\n    text = re.sub(r\"\\\\l\\[\\d+\\]\", \"\", str(text), flags=re.I)\n    text = re.sub(r\"\\\\c\\[\\d+\\]\", \"\", text, flags=re.I)\n    text = re.sub(r\"</?ac>\", \"\", text, flags=re.I)\n    text = text.replace(\"\\\\b\", \"\").replace(\"\\\\r\", \"\")\n\n    scene._render_world()\n    background = scene.graphics.screen.copy()\n    screen = scene.graphics.screen\n    ui_scale = max(1, int(min(screen.get_width() / 512.0, screen.get_height() / 384.0)))\n    viewport_w, viewport_h = 512 * ui_scale, 384 * ui_scale\n    viewport_x = (screen.get_width() - viewport_w) // 2\n    viewport_y = (screen.get_height() - viewport_h) // 2\n    font_path = scene.project_root / \"assets\" / \"Fonts\" / \"power green.ttf\"\n    font = pygame.font.Font(str(font_path) if font_path.is_file() else None, 27 * ui_scale)\n    options = scene.game_state.get(\"message_options\", {})")
-	if !bytes.Contains(dialogue, oldHeader) {
-		return fmt.Errorf("runtime options_dialogue.py: parser messaggi non trovato")
-	}
-	dialogue = bytes.Replace(dialogue, oldHeader, newHeader, 1)
-	dialogue = bytes.Replace(dialogue, []byte("    height = 130"), []byte("    framed = int(options.get(\"frame\", 0)) == 0\n    line_height = max(1, round(31 * ui_scale))\n    height = min(screen.get_height(), max(round(64 * ui_scale), linecount * line_height + (round(32 * ui_scale) if framed else 0)))"), 1)
-	dialogue = bytes.Replace(dialogue, []byte("    pages = dialogue_pages(text, font, box.width - 44)"), []byte("    pages = [text.split(\"\\n\")] if centered else dialogue_pages(text, font, box.width - round(44 * ui_scale), rows=linecount)"), 1)
-	dialogue = bytes.Replace(dialogue, []byte("    y = (\n        35 if position == 0\n        else (screen.get_height() - height) // 2 if position == 1\n        else screen.get_height() - 165\n    )\n    box = pygame.Rect(35, y, screen.get_width() - 70, height)"), []byte("    y = (\n        viewport_y + 35 * ui_scale if position == 0\n        else viewport_y + (viewport_h - height) // 2 if position == 1\n        else viewport_y + viewport_h - height - 35 * ui_scale\n    )\n    margin = 35 * ui_scale\n    box = pygame.Rect(viewport_x + margin, y, viewport_w - (margin * 2), height)"), 1)
-	dialogue = bytes.Replace(dialogue, []byte("            framed = int(options.get(\"frame\", 0)) == 0\n            if framed:"), []byte("            if framed:"), 1)
-	oldDraw := []byte("                if not framed:\n                    screen.blit(\n                        font.render(shown, True, (0, 0, 0)),\n                        (box.x + 23, box.y + 21 + row * 31),\n                    )\n                rendered = font.render(\n                    shown, True, (25, 35, 50) if framed else (255, 255, 255)\n                )\n                screen.blit(rendered, (box.x + 22, box.y + 20 + row * 31))")
-	newDraw := []byte("                main = (80, 80, 88) if framed else (248, 248, 248)\n                shadow = (160, 160, 168) if framed else (72, 80, 88)\n                rendered_shadow = font.render(shown, True, shadow)\n                rendered = font.render(shown, True, main)\n                tx = box.centerx - rendered.get_width() // 2 if centered else box.x + round(22 * ui_scale)\n                ty = box.y + round(20 * ui_scale) + row * line_height\n                shadow_offset = max(1, round(2 * ui_scale))\n                screen.blit(rendered_shadow, (tx + shadow_offset, ty + shadow_offset))\n                screen.blit(rendered, (tx, ty))")
-	if !bytes.Contains(dialogue, oldDraw) {
-		return fmt.Errorf("runtime options_dialogue.py: renderer testo non trovato")
-	}
-	dialogue = bytes.Replace(dialogue, oldDraw, newDraw, 1)
-	if err := writeBytesAtomic(dialoguePath, dialogue, 0644); err != nil {
-		return fmt.Errorf("aggiornamento dialoghi Essentials: %w", err)
-	}
-	// The compatibility module above validates that the embedded template still
-	// has the expected entry points. The final implementation is rendered on the
-	// native 512x384 Essentials canvas and uses the imported Windowskins.
 	if err := writeBytesAtomic(dialoguePath, []byte(runtimeEssentialsDialoguePython), 0644); err != nil {
 		return fmt.Errorf("installazione renderer dialoghi Essentials: %w", err)
 	}
