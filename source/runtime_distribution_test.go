@@ -186,6 +186,13 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
     if strings.Contains(mapText, `prompt_text(self.graphics, "Come ti chiami?"`) {
         t.Fatal("pbTrainerName still uses the generic text prompt")
     }
+    toneIndex := strings.Index(mapText, `tone = self.game_state.get("screen_tone")`)
+    weatherIndex := strings.Index(mapText, `self._draw_overworld_weather()`)
+    pictureIndex := strings.LastIndex(mapText, `self._draw_pictures()`)
+    if toneIndex < 0 || weatherIndex < 0 || pictureIndex < 0 ||
+        !(toneIndex < weatherIndex && weatherIndex < pictureIndex) {
+        t.Fatalf("Essentials Pictures must render above map tone/weather; tone=%d weather=%d pictures=%d", toneIndex, weatherIndex, pictureIndex)
+    }
 
     dialogueData, err := os.ReadFile(filepath.Join(root, "game", "options_dialogue.py"))
     if err != nil {
