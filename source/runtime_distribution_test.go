@@ -96,6 +96,12 @@ func TestRuntimeNameEntryUsesImportedEssentialsAssets(t *testing.T) {
         "event_action(root,e)",
         "_txt(tab,font,ch,44+col*32,24+row*38,True)",
         "action=event_action(root,e)",
+        "PRESET_NAMES=(\"Alex\",\"Sam\",\"Nico\",\"Ari\",\"Eli\")",
+        "Nome personalizzato",
+        "Custom name",
+        "scene._show_choices([custom_label,*PRESET_NAMES])",
+        "if selected==0:",
+        "return show_name_entry(scene,None,0,10,\"\",1)",
     } {
         if !strings.Contains(src, want) {
             t.Fatalf("Essentials naming UI missing %q", want)
@@ -150,12 +156,16 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
     mapText := string(mapData)
     for _, want := range []string{
         "show_controls_help(self.graphics, self.project_root)",
-        `show_name_entry(self, None, 0, 10, "", 1)`,
+        "from game.name_entry_scene import choose_player_name",
+        "name = choose_player_name(self)",
         "pbEnterText",
         "value = show_name_entry(self, helptext, minlength, maxlength, initial)",
         "numeric_args = re.sub",
         "for continuation in parts[1:]",
         "if continuation and not message.endswith(\" \")",
+        "from game.options_system import event_action",
+        "action = event_action(self.project_root, event)",
+        "power green.ttf",
     } {
         if !strings.Contains(mapText, want) {
             t.Fatalf("patched map scene missing %q", want)
