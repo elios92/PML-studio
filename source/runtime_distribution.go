@@ -990,52 +990,6 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	}
 	patched = bytes.Replace(patched, oldWeatherOrder, newWeatherOrder, 1)
 
-	oldChoiceStart := []byte("    def _show_choices(self, choices: list[str]) -> int:\n        if not choices:\n            return -1\n        selected = 0\n        font_path = self.project_root / \"assets\" / \"Fonts\" / \"power clear.ttf\"")
-	newChoiceStart := []byte("    def _show_choices(self, choices: list[str]) -> int:\n        if not choices:\n            return -1\n        from game.options_system import event_action\n        selected = 0\n        sw, sh = self.graphics.screen.get_size()\n        ui_scale = max(1, int(min(sw / 512.0, sh / 384.0)))\n        viewport_w, viewport_h = 512 * ui_scale, 384 * ui_scale\n        viewport_x = (sw - viewport_w) // 2\n        viewport_y = (sh - viewport_h) // 2\n        font_path = self.project_root / \"assets\" / \"Fonts\" / \"power green.ttf\"")
-	if !bytes.Contains(patched, oldChoiceStart) {
-		return fmt.Errorf("runtime map_scene.py: finestra scelte non trovata")
-	}
-	patched = bytes.Replace(patched, oldChoiceStart, newChoiceStart, 1)
-
-	oldChoiceInput := []byte(`                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:
-                        selected = (selected - 1) % len(choices)
-                    elif event.key == pygame.K_DOWN:
-                        selected = (selected + 1) % len(choices)
-                    elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
-                        return selected
-                    elif event.key == pygame.K_ESCAPE:
-                        cancel = getattr(self, "_choice_cancel_type", 0)
-                        if cancel == 5:
-                            return 4
-                        if 1 <= cancel <= len(choices):
-                            return cancel - 1`)
-	newChoiceInput := []byte(`                action = event_action(self.project_root, event)
-                if action == "up":
-                    selected = (selected - 1) % len(choices)
-                elif action == "down":
-                    selected = (selected + 1) % len(choices)
-                elif action == "confirm":
-                    return selected
-                elif action == "cancel":
-                    cancel = getattr(self, "_choice_cancel_type", 0)
-                    if cancel == 5:
-                        return 4
-                    if 1 <= cancel <= len(choices):
-                        return cancel - 1`)
-	if !bytes.Contains(patched, oldChoiceInput) {
-		return fmt.Errorf("runtime map_scene.py: input finestra scelte non trovato")
-	}
-	patched = bytes.Replace(patched, oldChoiceInput, newChoiceInput, 1)
-
-	patched = bytes.Replace(patched, []byte(`        font = pygame.font.Font(str(font_path) if font_path.is_file() else None, 27)`), []byte(`        font = pygame.font.Font(str(font_path) if font_path.is_file() else None, 27 * ui_scale)`), 1)
-	patched = bytes.Replace(patched, []byte(`            width = max(260, max(font.size(str(choice))[0] for choice in choices) + 65)
-            panel = pygame.Rect(self.graphics.screen.get_width() - width - 35, 35, width, 25 + len(choices) * 38)`), []byte(`            width = max(260 * ui_scale, max(font.size(str(choice))[0] for choice in choices) + 65 * ui_scale)
-            panel = pygame.Rect(viewport_x + viewport_w - width - 35 * ui_scale, viewport_y + 35 * ui_scale, width, 25 * ui_scale + len(choices) * 38 * ui_scale)`), 1)
-	patched = bytes.Replace(patched, []byte(`                y = panel.y + 16 + row * 38`), []byte(`                y = panel.y + 16 * ui_scale + row * 38 * ui_scale`), 1)
-	patched = bytes.Replace(patched, []byte(`                    pygame.draw.rect(self.graphics.screen, (90, 155, 210), (panel.x + 12, y - 3, panel.width - 24, 33), border_radius=4)`), []byte(`                    pygame.draw.rect(self.graphics.screen, (90, 155, 210), (panel.x + 12 * ui_scale, y - 3 * ui_scale, panel.width - 24 * ui_scale, 33 * ui_scale), border_radius=4 * ui_scale)`), 1)
-	patched = bytes.Replace(patched, []byte(`                self.graphics.screen.blit(font.render(str(choice), True, (25, 35, 50)), (panel.x + 28, y))`), []byte(`                self.graphics.screen.blit(font.render(str(choice), True, (25, 35, 50)), (panel.x + 28 * ui_scale, y))`), 1)
-
 	patched, err = replaceRuntimePythonSection(
 		patched,
 		"    def _show_choices(self, choices: list[str]) -> int:",
