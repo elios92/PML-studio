@@ -506,6 +506,7 @@ def show_dialogue_with_speed(scene: Any,text: str) -> None:
     position=int(options.get("position",2))
     y=0 if position==0 else (BASE_H-height)//2 if position==1 else BASE_H-height
     box=pygame.Rect(0,y,BASE_W,height)
+    scene.game_state["_last_message_rect"]=[box.x,box.y,box.width,box.height]
     content_width=max(1,BASE_W-left-right-4)
     if centered:
         pages=[raw.split("\n")]
@@ -577,6 +578,7 @@ import pygame
 
 from game.essentials_ui import BASE_W,BASE_H,present_logical
 from game.map_scene import load_image
+from game.message_system import intl
 from game.options_system import event_action
 
 TEXT=(232,232,232)
@@ -631,19 +633,19 @@ def draw_load_menu(scene,entries,index,save_data):
         logical.blit(_panel_piece(scene,(0,222 if selected else 0,408,222)),(48,y))
         state=save_data.get("game_state",{})
         map_id=int(save_data.get("map_id",0) or 0)
-        name=str(state.get("player_name","Trainer"))
-        map_name=str(scene.map_names.get(str(map_id),{}).get("name",f"Map {map_id:03d}"))
+        name=str(state.get("player_name",intl("Trainer")))
+        map_name=str(scene.map_names.get(str(map_id),{}).get("name",intl("Map {1}",f"{map_id:03d}")))
         _text(logical,font,entries[0][1],80,y+16)
         _text(logical,font,map_name,434,y+16,1)
         profile=int(state.get("player_profile",1) or 1)
         base,shadow=(FEMALE,FEMALE_SHADOW) if profile==2 else (MALE,MALE_SHADOW)
         _text(logical,font,name,160,y+70,0,base,shadow)
-        _text(logical,font,"Badges:",80,y+118)
+        _text(logical,font,intl("Badges:"),80,y+118)
         _text(logical,font,int(state.get("badges",0) or 0),254,y+118,1)
-        _text(logical,font,"Pokédex:",80,y+150)
+        _text(logical,font,intl("Pokédex:"),80,y+150)
         _text(logical,font,len(state.get("pokedex_seen",[])),254,y+150,1)
         minutes=int(state.get("play_time_seconds",0) or 0)//60
-        _text(logical,font,"Time:",80,y+182)
+        _text(logical,font,intl("Time:"),80,y+182)
         _text(logical,font,f"{minutes//60}h {minutes%60}m" if minutes>=60 else f"{minutes}m",254,y+182,1)
         player=_player_frame(scene,state)
         if player:logical.blit(player,(112-player.get_width()//2,y+80-player.get_height()//2))
