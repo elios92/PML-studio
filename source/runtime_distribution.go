@@ -297,7 +297,7 @@ def choose_player_name(scene:Any):
  if scene.game_state.get("quit_requested"):
   return None
  if selected==0:
-  return show_name_entry(scene,None,0,10,"",1)
+  return show_name_entry(scene,None,1,10,"",1)
  if 1<=selected<=len(PRESET_NAMES):
   return PRESET_NAMES[selected-1]
  return None
