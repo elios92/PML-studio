@@ -172,7 +172,7 @@ from game.options_system import event_action, load_settings, resolved_language
 
 
 def _font(root: Path, size: int) -> pygame.font.Font:
-    for name in ("power clear.ttf", "Power Clear.ttf"):
+    for name in ("power green.ttf", "Power Green.ttf", "power clear.ttf"):
         path = root / "assets" / "Fonts" / name
         if path.is_file():
             return pygame.font.Font(str(path), size)
@@ -444,6 +444,18 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return fmt.Errorf("runtime map_scene.py: pbEnterText non trovato")
 	}
 	patched = bytes.Replace(patched, oldEntry, newEntry, 1)
+
+	oldMessageJoin := []byte(`                self._show_dialogue(self._format_text(" ".join(parts)))`)
+	newMessageJoin := []byte(`                message = parts[0] if parts else ""
+                for continuation in parts[1:]:
+                    if continuation and not message.endswith(" "):
+                        message += " "
+                    message += continuation
+                self._show_dialogue(self._format_text(message))`)
+	if !bytes.Contains(patched, oldMessageJoin) {
+		return fmt.Errorf("runtime map_scene.py: concatenazione Show Text non trovata")
+	}
+	patched = bytes.Replace(patched, oldMessageJoin, newMessageJoin, 1)
 
 	if err := writeBytesAtomic(mapPath, patched, 0644); err != nil {
 		return fmt.Errorf("aggiornamento UI eventi runtime: %w", err)
