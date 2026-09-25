@@ -56,6 +56,8 @@ func TestRuntimeControlsHelpUsesImportedEssentialsAsset(t *testing.T) {
         `assets.image("Controls help/help_bg")`,
         "fully customizable in Game Settings",
         "completamente configurabili nelle Impostazioni di gioco",
+        "scale = max(1, int(min(sw / 512.0, sh / 384.0)))",
+        "dw, dh = 512 * scale, 384 * scale",
     } {
         if !strings.Contains(src, want) {
             t.Fatalf("controls help patch missing %q", want)
@@ -104,6 +106,8 @@ func TestRuntimeNameEntryUsesImportedEssentialsAssets(t *testing.T) {
         "scene._show_choices([custom_label,*presets])",
         "if selected==0:",
         "return show_name_entry(scene,None,1,10,\"\",1)",
+        "k=max(1,int(min(w/512.0,h/384.0)))",
+        "dw,dh=512*k,384*k",
         "if 1<=selected<=len(presets):",
         "return presets[selected-1]",
     } {
@@ -170,6 +174,10 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         "from game.options_system import event_action",
         "action = event_action(self.project_root, event)",
         "power green.ttf",
+        "ui_scale = max(1, int(min(sw / 512.0, sh / 384.0)))",
+        "viewport_w, viewport_h = 512 * ui_scale, 384 * ui_scale",
+        "path = self.picture_catalog.find(picture[\"name\"])",
+        "pygame.transform.scale(",
     } {
         if !strings.Contains(mapText, want) {
             t.Fatalf("patched map scene missing %q", want)
@@ -184,7 +192,7 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         t.Fatal(err)
     }
     dialogueText := string(dialogueData)
-    for _, want := range []string{`\l\[(\d+)\]`, `"<ac>"`, `text.split("\n")`, "ui_scale", "line_height", "power green.ttf"} {
+    for _, want := range []string{`\l\[(\d+)\]`, `"<ac>"`, `text.split("\n")`, "scene._render_world()", "ui_scale = max(1, int(min(", "viewport_w, viewport_h = 512 * ui_scale, 384 * ui_scale", "line_height", "power green.ttf"} {
         if !strings.Contains(dialogueText, want) {
             t.Fatalf("Essentials dialogue parser missing %q", want)
         }
@@ -198,6 +206,21 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
     if !strings.Contains(optionsText, `"text_entry": "cursor"`) {
         t.Fatal("Essentials cursor text-entry default was not restored")
     }
+    for _, want := range []string{
+        `"essentials_1x": ("Essentials 1x — 512×384", (512, 384), False)`,
+        `"essentials_2x": ("Essentials 2x — 1024×768", (1024, 768), False)`,
+        `"window_mode": "essentials_1x"`,
+        `WINDOW_PRESETS["essentials_1x"]`,
+    } {
+        if !strings.Contains(optionsText, want) {
+            t.Fatalf("Essentials display policy missing %q", want)
+        }
+    }
+    for _, forbidden := range []string{"window_1336", "window_800", "window_1280", "gba_1x"} {
+        if strings.Contains(optionsText, forbidden) {
+            t.Fatalf("arbitrary legacy display preset survived: %q", forbidden)
+        }
+    }
     if !strings.Contains(optionsText, `"language": "en"`) ||
         !strings.Contains(optionsText, `settings["language"] = "en"`) {
         t.Fatal("source Essentials language was not propagated to runtime options")
@@ -209,7 +232,8 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
     }
     configText := string(configData)
     if !strings.Contains(configText, `"text_entry": "cursor"`) ||
-        !strings.Contains(configText, `"language": "en"`) {
+        !strings.Contains(configText, `"language": "en"`) ||
+        !strings.Contains(configText, `"window_mode": "essentials_1x"`) {
         t.Fatal("source Essentials UI defaults were not propagated to config/options.json")
     }
 }
