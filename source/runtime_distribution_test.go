@@ -39,7 +39,7 @@ func TestPatchRuntimeButtonEventScene(t *testing.T) {
     }
     for _, want := range []string{
         "from game.controls_help import show_controls_help",
-        "show_controls_help(self.graphics, self.root)",
+        "show_controls_help(self.graphics, self.project_root)",
         `if "pbShowMap" in script:`,
     } {
         if !strings.Contains(got, want) {
