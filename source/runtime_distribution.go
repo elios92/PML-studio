@@ -655,11 +655,20 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	if err != nil {
 		return fmt.Errorf("lettura config/options.json: %w", err)
 	}
-	configData = bytes.Replace(configData, []byte("\"text_entry\": \"keyboard\""), []byte("\"text_entry\": \"cursor\""), 1)
-	configData = bytes.Replace(configData, []byte("\"window_mode\": \"window_1336\""), []byte("\"window_mode\": \"essentials_1x\""), 1)
-	configData = bytes.Replace(configData, []byte("\"language\": \"it\""), []byte(fmt.Sprintf("\"language\": %q", sourceLanguage)), 1)
+	var runtimeConfig map[string]any
+	if err := json.Unmarshal(configData, &runtimeConfig); err != nil {
+		return fmt.Errorf("config/options.json non valido: %w", err)
+	}
+	runtimeConfig["text_entry"] = "cursor"
+	runtimeConfig["window_mode"] = "essentials_1x"
+	runtimeConfig["language"] = sourceLanguage
+	configData, err = json.MarshalIndent(runtimeConfig, "", "  ")
+	if err != nil {
+		return fmt.Errorf("serializzazione config/options.json: %w", err)
+	}
+	configData = append(configData, '\n')
 	if err := writeBytesAtomic(configPath, configData, 0644); err != nil {
-		return fmt.Errorf("aggiornamento config Text Entry: %w", err)
+		return fmt.Errorf("aggiornamento config UI runtime: %w", err)
 	}
 	return nil
 }
