@@ -159,6 +159,129 @@ func normalizeRuntimeCanonicalPBSPaths(data []byte) []byte {
 	return data
 }
 
+
+const runtimeControlsHelpPython = `"""PML controls help using the imported Pokémon Essentials UI asset."""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+import pygame
+
+from game.ui_assets import UIAssets
+
+
+def _font(root: Path, size: int) -> pygame.font.Font:
+    for name in ("power clear.ttf", "Power Clear.ttf"):
+        path = root / "assets" / "Fonts" / name
+        if path.is_file():
+            return pygame.font.Font(str(path), size)
+    return pygame.font.Font(None, size)
+
+
+def _wrap(font: pygame.font.Font, text: str, width: int) -> list[str]:
+    words = text.split()
+    lines: list[str] = []
+    current = ""
+    for word in words:
+        trial = word if not current else current + " " + word
+        if current and font.size(trial)[0] > width:
+            lines.append(current)
+            current = word
+        else:
+            current = trial
+    if current:
+        lines.append(current)
+    return lines
+
+
+def show_controls_help(graphics: Any, project_root: Path) -> None:
+    root = Path(project_root)
+    assets = UIAssets(root)
+    original = assets.image("Controls help/help_bg")
+    if original is None:
+        raise RuntimeError(
+            "UI Essentials mancante: assets/Graphics/Pictures/Controls help/help_bg"
+        )
+
+    # This is intentionally not the RPG Maker F1/F8 help. PML input bindings
+    # are configured from the in-game Options menu.
+    message = "Keyboard and controller controls are fully customizable in Game Settings."
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                raise SystemExit(0)
+            if event.type == pygame.KEYDOWN:
+                return
+
+        screen = graphics.screen
+        sw, sh = screen.get_size()
+        screen.fill((0, 0, 0))
+        ow, oh = original.get_size()
+
+        # Keep the imported Essentials board intact. For this compatibility
+        # phase there is no arbitrary responsive stretching.
+        scale = min(sw / ow, sh / oh)
+        if scale >= 1.0:
+            scale = max(1.0, float(int(scale)))
+        dw, dh = max(1, round(ow * scale)), max(1, round(oh * scale))
+        surface = original if (dw, dh) == (ow, oh) else pygame.transform.scale(original, (dw, dh))
+        ox, oy = (sw - dw) // 2, (sh - dh) // 2
+        screen.blit(surface, (ox, oy))
+
+        logical_scale = dw / 512.0
+        text_font = _font(root, max(16, round(22 * logical_scale)))
+        left = ox + round(128 * logical_scale)
+        top = oy + round(118 * logical_scale)
+        width = max(120, dw - round(170 * logical_scale))
+        line_h = text_font.get_height() + max(2, round(3 * logical_scale))
+        for line in _wrap(text_font, message, width):
+            screen.blit(text_font.render(line, True, (72, 72, 72)), (left, top))
+            top += line_h
+        graphics.update()
+`
+
+func patchRuntimeButtonEventScene(data []byte) ([]byte, error) {
+	text := string(data)
+	marker := `if "pbEventScreen(ButtonEventScene)" in script:`
+	pos := strings.Index(text, marker)
+	if pos < 0 {
+		return nil, fmt.Errorf("runtime map_scene.py: ButtonEventScene non trovata")
+	}
+	lineStart := strings.LastIndex(text[:pos], "\n") + 1
+	indent := text[lineStart:pos]
+	nextMarker := "\n" + indent + "if "
+	nextRel := strings.Index(text[pos+len(marker):], nextMarker)
+	if nextRel < 0 {
+		return nil, fmt.Errorf("runtime map_scene.py: fine blocco ButtonEventScene non trovata")
+	}
+	end := pos + len(marker) + nextRel
+	replacement := marker + "\n" + indent + "    from game.controls_help import show_controls_help\n" +
+		indent + "    show_controls_help(self.graphics, self.root)\n" +
+		indent + "    return"
+	return []byte(text[:pos] + replacement + text[end:]), nil
+}
+
+func installRuntimeUICompatibilityPatch(dest string) error {
+	controlsPath := filepath.Join(dest, "game", "controls_help.py")
+	if err := writeBytesAtomic(controlsPath, []byte(runtimeControlsHelpPython), 0644); err != nil {
+		return fmt.Errorf("installazione UI controlli PML: %w", err)
+	}
+	mapPath := filepath.Join(dest, "game", "map_scene.py")
+	data, err := os.ReadFile(mapPath)
+	if err != nil {
+		return fmt.Errorf("lettura runtime map_scene.py: %w", err)
+	}
+	patched, err := patchRuntimeButtonEventScene(data)
+	if err != nil {
+		return err
+	}
+	if err := writeBytesAtomic(mapPath, patched, 0644); err != nil {
+		return fmt.Errorf("aggiornamento ButtonEventScene runtime: %w", err)
+	}
+	return nil
+}
+
 func installRuntimeCore(dest, projectName string) (releaseExe, debugExe string, err error) {
 	if len(plmRuntimeCoreZip) == 0 {
 		return "", "", fmt.Errorf("template runtime PLM non incorporato")
@@ -232,6 +355,12 @@ func installRuntimeCore(dest, projectName string) (releaseExe, debugExe string, 
 		if err := writeBytesAtomic(target, data, mode); err != nil {
 			return "", "", err
 		}
+	}
+
+	// Compatibility patch: preserve the imported Essentials controls UI while
+	// routing input configuration to PML's real in-game Options system.
+	if err := installRuntimeUICompatibilityPatch(dest); err != nil {
+		return "", "", err
 	}
 
 	base := safeGameExecutableBaseName(projectName)
