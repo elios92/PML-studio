@@ -363,6 +363,335 @@ def show_name_entry(scene:Any,helptext:str|None=None,minlength:int=1,maxlength:i
      if len(val)>=maxlength:cur=-1
 `
 
+const runtimeEssentialsUIPython = `from __future__ import annotations
+from pathlib import Path
+import pygame
+
+BASE_W=512
+BASE_H=384
+
+def integer_scale(screen: pygame.Surface) -> int:
+    w,h=screen.get_size()
+    return max(1,int(min(w/BASE_W,h/BASE_H)))
+
+def viewport(screen: pygame.Surface):
+    scale=integer_scale(screen)
+    w,h=BASE_W*scale,BASE_H*scale
+    return scale,(screen.get_width()-w)//2,(screen.get_height()-h)//2,w,h
+
+def present_logical(screen: pygame.Surface, logical: pygame.Surface, clear=True) -> None:
+    scale,x,y,w,h=viewport(screen)
+    image=logical if scale==1 else pygame.transform.scale(logical,(w,h))
+    if clear:
+        screen.fill((0,0,0))
+    screen.blit(image,(x,y))
+
+def blit_logical_overlay(screen: pygame.Surface, logical: pygame.Surface) -> None:
+    present_logical(screen,logical,False)
+
+def _windowskin_file(root: Path, kind: str, index: int) -> Path | None:
+    folder=Path(root)/"assets"/"Graphics"/"Windowskins"
+    if not folder.is_dir():
+        return None
+    number=max(0,int(index))+1
+    wanted=(f"speech hgss {number}" if kind=="speech" else f"choice {number}").casefold()
+    fallback=("speech hgss 1" if kind=="speech" else "choice 1").casefold()
+    found={}
+    for path in folder.iterdir():
+        if path.is_file() and path.suffix.casefold() in (".png",".bmp",".jpg",".jpeg"):
+            found.setdefault(path.stem.casefold(),path)
+    return found.get(wanted) or found.get(fallback)
+
+def load_windowskin(root: Path, kind: str, index: int=0) -> pygame.Surface:
+    path=_windowskin_file(Path(root),kind,index)
+    if path is None:
+        raise FileNotFoundError(f"Windowskin Essentials mancante: {kind} {int(index)+1}")
+    return pygame.image.load(str(path)).convert_alpha()
+
+def skin_metrics(skin: pygame.Surface):
+    w,h=skin.get_size()
+    if w in (80,96) and h==48:
+        body=(32,16,16,16)
+    elif w==80 and h==80:
+        body=(32,32,16,16)
+    else:
+        body=((w-16)//2,(h-16)//2,16,16)
+    bx,by,bw,bh=body
+    right=max(0,w-(bx+bw))
+    bottom=max(0,h-(by+bh))
+    return bx,by,right,bottom,body
+
+def _stretch(dst,src,dst_rect,src_rect):
+    dx,dy,dw,dh=map(int,dst_rect); sx,sy,sw,sh=map(int,src_rect)
+    if dw<=0 or dh<=0 or sw<=0 or sh<=0:return
+    part=src.subsurface(pygame.Rect(sx,sy,sw,sh))
+    dst.blit(pygame.transform.scale(part,(dw,dh)),(dx,dy))
+
+def _tile(dst,src,dst_rect,src_rect):
+    dx,dy,dw,dh=map(int,dst_rect); sx,sy,sw,sh=map(int,src_rect)
+    if dw<=0 or dh<=0 or sw<=0 or sh<=0:return
+    part=src.subsurface(pygame.Rect(sx,sy,sw,sh))
+    yy=0
+    while yy<dh:
+        xx=0
+        ph=min(sh,dh-yy)
+        while xx<dw:
+            pw=min(sw,dw-xx)
+            dst.blit(part,(dx+xx,dy+yy),pygame.Rect(0,0,pw,ph))
+            xx+=sw
+        yy+=sh
+
+def draw_windowskin(dst: pygame.Surface, skin: pygame.Surface, rect) -> tuple[int,int,int,int]:
+    x,y,w,h=map(int,rect)
+    left,top,right,bottom,body=skin_metrics(skin)
+    bx,by,bw,bh=body
+    cx,cy=bx+bw,by+bh
+    inner_w=max(0,w-left-right)
+    inner_h=max(0,h-top-bottom)
+    _stretch(dst,skin,(x+left,y+top,inner_w,inner_h),(bx,by,bw,bh))
+    _tile(dst,skin,(x+left,y,inner_w,top),(left,0,bw,top))
+    _tile(dst,skin,(x,y+top,left,inner_h),(0,top,left,bh))
+    _tile(dst,skin,(x+w-right,y+top,right,inner_h),(cx,top,right,bh))
+    _tile(dst,skin,(x+left,y+h-bottom,inner_w,bottom),(left,cy,bw,bottom))
+    if left and top: dst.blit(skin,(x,y),pygame.Rect(0,0,left,top))
+    if right and top: dst.blit(skin,(x+w-right,y),pygame.Rect(cx,0,right,top))
+    if left and bottom: dst.blit(skin,(x,y+h-bottom),pygame.Rect(0,cy,left,bottom))
+    if right and bottom: dst.blit(skin,(x+w-right,y+h-bottom),pygame.Rect(cx,cy,right,bottom))
+    return left,top,right,bottom
+`
+
+const runtimeEssentialsDialoguePython = `"""Dialoghi Pokémon Essentials v20.1 su canvas logico 512x384."""
+from __future__ import annotations
+from typing import Any
+import re
+import pygame
+
+from game.dialogue_layout import dialogue_pages
+from game.essentials_ui import BASE_W,BASE_H,blit_logical_overlay,draw_windowskin,load_windowskin,skin_metrics
+from game.options_system import event_action,load_settings,text_speed_delay
+
+def _font(scene: Any) -> pygame.font.Font:
+    path=scene.project_root/"assets"/"Fonts"/"power green.ttf"
+    return pygame.font.Font(str(path) if path.is_file() else None,27)
+
+def _pressed_advance(scene: Any,event: pygame.event.Event) -> bool:
+    if event.type==pygame.JOYBUTTONDOWN:
+        return event_action(scene.project_root,event) in ("confirm","cancel")
+    if event.type!=pygame.KEYDOWN or getattr(event,"repeat",False):
+        return False
+    return event_action(scene.project_root,event) in ("confirm","cancel")
+
+def show_dialogue_with_speed(scene: Any,text: str) -> None:
+    raw=str(text)
+    linecount=2
+    match=re.search(r"\\l\[(\d+)\]",raw,re.I)
+    if match:
+        linecount=max(1,int(match.group(1)))
+    centered="<ac>" in raw.casefold()
+    raw=re.sub(r"\\l\[\d+\]","",raw,flags=re.I)
+    raw=re.sub(r"\\c\[\d+\]","",raw,flags=re.I)
+    raw=re.sub(r"</?ac>","",raw,flags=re.I)
+    raw=raw.replace("\\b","").replace("\\r","")
+
+    scene._render_world()
+    background=scene.graphics.screen.copy()
+    font=_font(scene)
+    settings=load_settings(scene.project_root)
+    skin=load_windowskin(scene.project_root,"speech",int(settings.get("speech_frame",0) or 0))
+    left,top,right,bottom,_=skin_metrics(skin)
+
+    options=scene.game_state.get("message_options",{})
+    framed=int(options.get("frame",0))==0
+    height=top+bottom+(linecount*32)
+    position=int(options.get("position",2))
+    y=0 if position==0 else (BASE_H-height)//2 if position==1 else BASE_H-height
+    box=pygame.Rect(0,y,BASE_W,height)
+    content_width=max(1,BASE_W-left-right-4)
+    if centered:
+        pages=[raw.split("\n")]
+    else:
+        pages=dialogue_pages(raw,font,content_width,rows=linecount)
+    if not pages:return
+
+    delay=max(0.0,float(text_speed_delay(scene.project_root,scene.game_state)))
+    page_index=0
+    while page_index<len(pages):
+        page=pages[page_index]
+        full_text="\n".join(page)
+        visible_chars=len(full_text) if delay<=0 else 0
+        accumulator=0.0
+        while True:
+            scene.graphics.screen.blit(background,(0,0))
+            logical=pygame.Surface((BASE_W,BASE_H),pygame.SRCALPHA)
+            if framed:
+                draw_windowskin(logical,skin,box)
+
+            remaining=visible_chars
+            main=(80,80,88) if framed else (248,248,248)
+            shadow=(160,160,168) if framed else (72,80,88)
+            for row,line in enumerate(page):
+                take=min(len(line),max(0,remaining))
+                shown=line[:take]
+                remaining-=len(line)
+                if remaining>0:remaining-=1
+                if not shown:continue
+                rendered_shadow=font.render(shown,True,shadow)
+                rendered=font.render(shown,True,main)
+                tx=(BASE_W-rendered.get_width())//2 if centered else left+2
+                ty=y+top+(row*32)
+                logical.blit(rendered_shadow,(tx+2,ty+2))
+                logical.blit(rendered,(tx,ty))
+
+            complete=visible_chars>=len(full_text)
+            if complete and page_index+1<len(pages):
+                px=BASE_W-right-8
+                py=y+height-bottom//2
+                pygame.draw.polygon(logical,main,[(px-5,py-4),(px+5,py-4),(px,py+2)])
+
+            blit_logical_overlay(scene.graphics.screen,logical)
+            dt=scene.graphics.update()
+
+            advance=False
+            for event in pygame.event.get():
+                if event.type==pygame.QUIT:
+                    scene.game_state["quit_requested"]=True
+                    return
+                if _pressed_advance(scene,event):
+                    if not complete:
+                        visible_chars=len(full_text)
+                    else:
+                        advance=True
+            if advance:
+                page_index+=1
+                break
+            if not complete and delay>0:
+                accumulator+=max(0.0,float(dt))
+                step=int(accumulator/delay)
+                if step>0:
+                    visible_chars=min(len(full_text),visible_chars+step)
+                    accumulator-=step*delay
+`
+
+const runtimeEssentialsTitleUIPython = `from __future__ import annotations
+import pygame
+
+from game.essentials_ui import BASE_W,BASE_H,present_logical
+from game.map_scene import load_image
+from game.options_system import event_action
+
+TEXT=(232,232,232)
+SHADOW=(136,136,136)
+MALE=(56,160,248)
+MALE_SHADOW=(56,104,168)
+FEMALE=(240,72,88)
+FEMALE_SHADOW=(160,64,64)
+
+def _font(scene,size=27):
+    path=scene.project_root/"assets"/"Fonts"/"power green.ttf"
+    return pygame.font.Font(str(path) if path.is_file() else None,size)
+
+def _text(dst,font,text,x,y,align=0,base=TEXT,shadow=SHADOW):
+    text=str(text)
+    sh=font.render(text,True,shadow); fg=font.render(text,True,base)
+    if align==1:x-=fg.get_width()
+    elif align==2:x-=fg.get_width()//2
+    dst.blit(sh,(x+2,y+2));dst.blit(fg,(x,y))
+
+def _panel_piece(scene,source):
+    piece=pygame.Surface((source[2],source[3]),pygame.SRCALPHA)
+    piece.blit(scene.panels,(0,0),source)
+    return piece
+
+def _player_frame(scene,state):
+    profile=int(state.get("player_profile",1) or 1)
+    path=scene.characters.find("trchar001" if profile==2 else "trchar000")
+    if not path:return None
+    sheet=load_image(path)
+    fw,fh=sheet.get_width()//4,sheet.get_height()//4
+    frame=pygame.Surface((fw,fh),pygame.SRCALPHA)
+    frame.blit(sheet,(0,0),(0,0,fw,fh))
+    return frame
+
+def _pokemon_icon(scene,pokemon):
+    path=scene.icons.find(str(pokemon.get("species","")))
+    if not path:return None
+    sheet=load_image(path)
+    fw=sheet.get_width()//2
+    frame=pygame.Surface((fw,sheet.get_height()),pygame.SRCALPHA)
+    frame.blit(sheet,(0,0),(0,0,fw,sheet.get_height()))
+    return frame
+
+def draw_load_menu(scene,entries,index,save_data):
+    bg=scene.load_background
+    logical=bg.copy() if bg.get_size()==(BASE_W,BASE_H) else pygame.transform.scale(bg,(BASE_W,BASE_H))
+    font=_font(scene,27)
+    y=32
+    if save_data:
+        selected=index==0
+        logical.blit(_panel_piece(scene,(0,222 if selected else 0,408,222)),(48,y))
+        state=save_data.get("game_state",{})
+        map_id=int(save_data.get("map_id",0) or 0)
+        name=str(state.get("player_name","Trainer"))
+        map_name=str(scene.map_names.get(str(map_id),{}).get("name",f"Map {map_id:03d}"))
+        _text(logical,font,entries[0][1],80,y+16)
+        _text(logical,font,map_name,434,y+16,1)
+        profile=int(state.get("player_profile",1) or 1)
+        base,shadow=(FEMALE,FEMALE_SHADOW) if profile==2 else (MALE,MALE_SHADOW)
+        _text(logical,font,name,160,y+70,0,base,shadow)
+        _text(logical,font,"Badges:",80,y+118)
+        _text(logical,font,int(state.get("badges",0) or 0),254,y+118,1)
+        _text(logical,font,"Pokédex:",80,y+150)
+        _text(logical,font,len(state.get("pokedex_seen",[])),254,y+150,1)
+        minutes=int(state.get("play_time_seconds",0) or 0)//60
+        _text(logical,font,"Time:",80,y+182)
+        _text(logical,font,f"{minutes//60}h {minutes%60}m" if minutes>=60 else f"{minutes}m",254,y+182,1)
+        player=_player_frame(scene,state)
+        if player:logical.blit(player,(112-player.get_width()//2,y+80-player.get_height()//2))
+        for i,pokemon in enumerate(state.get("party",[])[:6]):
+            icon=_pokemon_icon(scene,pokemon)
+            if icon:
+                cx=334+66*(i%2);cy=y+80+50*(i//2)
+                logical.blit(icon,(cx-icon.get_width()//2,cy-icon.get_height()//2))
+        y+=224
+        first=1
+    else:
+        first=0
+
+    for row,(_,label) in enumerate(entries[first:]):
+        yy=y+row*48
+        selected=index==row+first
+        logical.blit(_panel_piece(scene,(0,490 if selected else 444,408,46)),(48,yy))
+        _text(logical,font,label,80,yy+14)
+
+    present_logical(scene.graphics.screen,logical)
+
+def show_splash(scene):
+    if scene.splash is None:return True
+    logical=scene.splash if scene.splash.get_size()==(BASE_W,BASE_H) else pygame.transform.scale(scene.splash,(BASE_W,BASE_H))
+    started=pygame.time.get_ticks()
+    while pygame.time.get_ticks()-started<1800:
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:return False
+            if event_action(scene.project_root,event) in ("confirm","cancel"):return True
+        present_logical(scene.graphics.screen,logical)
+        scene.graphics.update()
+    return True
+
+def title_wait(scene):
+    background=scene.background if scene.background.get_size()==(BASE_W,BASE_H) else pygame.transform.scale(scene.background,(BASE_W,BASE_H))
+    while True:
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:return False
+            if event_action(scene.project_root,event)=="confirm":return True
+        logical=background.copy()
+        start=scene.start_image.copy()
+        alpha=int((pygame.time.get_ticks()//12)%510)
+        start.set_alpha(255-abs(255-alpha))
+        logical.blit(start,((BASE_W-start.get_width())//2,322))
+        present_logical(scene.graphics.screen,logical)
+        scene.graphics.update()
+`
+
 func patchRuntimeButtonEventScene(data []byte) ([]byte, error) {
 	text := string(data)
 	marker := `if "pbEventScreen(ButtonEventScene)" in script:`
