@@ -53,14 +53,13 @@ func TestRuntimeControlsHelpUsesImportedEssentialsAsset(t *testing.T) {
     for _, want := range []string{
         `assets.image("Controls help/help_bg")`,
         "fully customizable in Game Settings",
+        "completamente configurabili nelle Impostazioni di gioco",
     } {
         if !strings.Contains(src, want) {
             t.Fatalf("controls help patch missing %q", want)
         }
     }
-    // Check only user-visible fixed-key labels. Comments intentionally mention
-    // the removed RPG Maker F1/F8 help to document why it must not return.
-    for _, forbidden := range []string{"Frecce: muovi", "F9: debug"} {
+    for _, forbidden := range []string{"F1", "F8", "Frecce: muovi", "F9: debug"} {
         if strings.Contains(src, forbidden) {
             t.Fatalf("controls help must not expose fixed RPG Maker key text %q", forbidden)
         }
