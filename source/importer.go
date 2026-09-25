@@ -55,6 +55,9 @@ type EssentialsImportReport struct {
 	CustomScripts           int      `json:"custom_scripts"`
 	PluginScriptsExtracted  int      `json:"plugin_scripts_extracted"`
 	PluginSourceFilesCopied int      `json:"plugin_source_files_copied"`
+	HotfixProfileDetected   bool     `json:"hotfix_profile_detected"`
+	HotfixProfileVersion    string   `json:"hotfix_profile_version,omitempty"`
+	HotfixNativeProfile     string   `json:"hotfix_native_profile,omitempty"`
 	AssetsCopied            []string `json:"assets_copied"`
 	CustomPBSFiles          []string `json:"custom_pbs_files,omitempty"`
 	Warnings                []string `json:"warnings,omitempty"`
@@ -1117,6 +1120,10 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 	if err != nil {
 		return nil, fmt.Errorf("analisi PBS Essentials v20.1: %w", err)
 	}
+	hotfixProfile, err := detectEssentialsV201Hotfixes(source)
+	if err != nil {
+		return nil, fmt.Errorf("analisi v20.1 Hotfixes: %w", err)
+	}
 	// A v20.1 fangame may legitimately modify most core scripts. Version
 	// recognition is therefore based on the presence/naming of the v20.1 core,
 	// while hash differences are preserved and reported as customizations.
@@ -1153,6 +1160,9 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 		PBSModifiedFiles:      append([]string(nil), pbsAnalysis.ModifiedFiles...),
 		PBSMissingFiles:       append([]string(nil), pbsAnalysis.MissingFiles...),
 		PBSAddedFiles:         append([]string(nil), pbsAnalysis.AddedFiles...),
+		HotfixProfileDetected: hotfixProfile.Detected,
+		HotfixProfileVersion:  hotfixProfile.PluginVersion,
+		HotfixNativeProfile:   hotfixProfile.NativeProfile,
 	}
 	if !analysis.ExactArchive && analysis.ExactMatchPercent < 99.9 {
 		report.Warnings = append(report.Warnings, fmt.Sprintf(
@@ -1215,6 +1225,12 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 		if report.PluginSourceFilesCopied > 0 {
 			report.AssetsCopied = append(report.AssetsCopied, "Plugins (sorgente Ruby)")
 		}
+	}
+	if err := writeEssentialsHotfixProfile(dest, hotfixProfile); err != nil {
+		return nil, fmt.Errorf("scrittura profilo v20.1 Hotfixes: %w", err)
+	}
+	if hotfixProfile.Detected {
+		report.AssetsCopied = append(report.AssetsCopied, "v20.1 Hotfixes "+hotfixProfile.PluginVersion+" (profilo compatibilità)")
 	}
 
 	convertedMaps := filepath.Join(dest, "converted", "maps")
@@ -1534,6 +1550,9 @@ func convertEssentialsProjectWithProgress(source, dest string, progress Essentia
 		"pbs_baseline_status":              pbsAnalysis.Status,
 		"pbs_baseline_exact_match_percent": pbsAnalysis.ExactMatchPercent,
 		"pbs_copy_verified_1_to_1":         report.PBSCopyVerified,
+		"hotfix_profile_detected":          hotfixProfile.Detected,
+		"hotfix_profile_version":           hotfixProfile.PluginVersion,
+		"hotfix_native_profile":            hotfixProfile.NativeProfile,
 	}
 	if err := writeJSON(filepath.Join(convertedData, "source_project.json"), sourceMeta); err != nil {
 		return nil, err
