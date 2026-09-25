@@ -623,6 +623,14 @@ def _pokemon_icon(scene,pokemon):
     frame.blit(sheet,(0,0),(0,0,fw,sheet.get_height()))
     return frame
 
+def menu_entries(scene,save_data):
+    entries=[]
+    if save_data: entries.append(("continue",intl("Continue")))
+    entries.extend((("new",intl("New Game")),("options",intl("Options"))))
+    if scene.debug: entries.append(("debug",intl("Debug")))
+    entries.append(("quit",intl("Quit Game")))
+    return entries
+
 def draw_load_menu(scene,entries,index,save_data):
     bg=scene.load_background
     logical=bg.copy() if bg.get_size()==(BASE_W,BASE_H) else pygame.transform.scale(bg,(BASE_W,BASE_H))
@@ -691,6 +699,21 @@ def title_wait(scene):
         start.set_alpha(255-abs(255-alpha))
         logical.blit(start,((BASE_W-start.get_width())//2,322))
         present_logical(scene.graphics.screen,logical)
+        scene.graphics.update()
+
+def choose(scene):
+    save_data=scene._save_data()
+    entries=scene._menu_entries(save_data)
+    index=0
+    while True:
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:return None
+            action=event_action(scene.project_root,event)
+            if action=="cancel":return None
+            if action=="up":index=(index-1)%len(entries)
+            elif action=="down":index=(index+1)%len(entries)
+            elif action=="confirm":return entries[index][0]
+        scene._draw_load_menu(entries,index,save_data)
         scene.graphics.update()
 `
 
@@ -1055,6 +1078,24 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		"    def _draw_load_menu(self,entries,index,save_data):",
 		"\n    def _choose(self):",
 		"    def _draw_load_menu(self,entries,index,save_data):\n        from game.essentials_title_ui import draw_load_menu\n        return draw_load_menu(self,entries,index,save_data)\n",
+	)
+	if err != nil {
+		return err
+	}
+	titleData, err = replaceRuntimePythonSection(
+		titleData,
+		"    def _menu_entries(self,save_data):",
+		"\n    def _draw_load_menu(self,entries,index,save_data):",
+		"    def _menu_entries(self,save_data):\n        from game.essentials_title_ui import menu_entries\n        return menu_entries(self,save_data)\n",
+	)
+	if err != nil {
+		return err
+	}
+	titleData, err = replaceRuntimePythonSection(
+		titleData,
+		"    def _choose(self):",
+		"\n    def _new_game(self):",
+		"    def _choose(self):\n        from game.essentials_title_ui import choose\n        return choose(self)\n",
 	)
 	if err != nil {
 		return err
