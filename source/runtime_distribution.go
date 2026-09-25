@@ -363,6 +363,86 @@ def show_name_entry(scene:Any,helptext:str|None=None,minlength:int=1,maxlength:i
      if len(val)>=maxlength:cur=-1
 `
 
+const runtimePlayerCharsetMethods = `    def _player_metadata_charsets(self) -> dict[str, str]:
+        """Resolve the active Essentials PlayerMetadata section from canonical PBS."""
+        profile = max(1, int(self.game_state.get("player_profile", 1) or 1))
+        metadata = self.project_root / "converted" / "PBS" / "metadata.txt"
+        values: dict[str, str] = {}
+        section = None
+        if metadata.is_file():
+            for raw_line in metadata.read_text(encoding="utf-8-sig").splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if line.startswith("[") and line.endswith("]"):
+                    section = line[1:-1].strip()
+                    continue
+                if section != str(profile) or "=" not in line:
+                    continue
+                key, value = (part.strip() for part in line.split("=", 1))
+                values[key.casefold()] = value
+
+        walk = values.get("walkcharset", "")
+        run = values.get("runcharset") or walk
+        cycle = values.get("cyclecharset") or run
+        surf = values.get("surfcharset") or cycle
+        dive = values.get("divecharset") or surf
+        fish = values.get("fishcharset") or walk
+        surf_fish = values.get("surffishcharset") or fish
+        return {
+            "walk": walk,
+            "run": run,
+            "cycle": cycle,
+            "surf": surf,
+            "dive": dive,
+            "fish": fish,
+            "surf_fish": surf_fish,
+        }
+
+    def _player_charset(self, movement: str | None = None) -> str:
+        """Match Essentials v20.1 PlayerMetadata charset/fallback semantics."""
+        charsets = self._player_metadata_charsets()
+        if movement is None:
+            if self.game_state.get("fishing", False):
+                movement = "surf_fish" if self.game_state.get("surfing", False) else "fish"
+            elif self.game_state.get("diving", False):
+                movement = "dive"
+            elif self.game_state.get("surfing", False):
+                movement = "surf"
+            elif self.game_state.get("bicycle", False):
+                movement = "cycle"
+            else:
+                movement = "walk"
+
+        name = str(charsets.get(str(movement), "") or charsets.get("walk", "")).strip()
+        if name and self.characters.find(name) is not None:
+            return name
+
+        # A broken/missing custom charset must not silently switch gender.
+        # Fall back only within the same PlayerMetadata section.
+        walk = str(charsets.get("walk", "")).strip()
+        if walk and self.characters.find(walk) is not None:
+            return walk
+        return name or walk
+
+    def _refresh_player_charset(self, running: bool = False, fishing: bool = False) -> None:
+        if fishing:
+            movement = "surf_fish" if self.game_state.get("surfing", False) else "fish"
+        elif self.game_state.get("diving", False):
+            movement = "dive"
+        elif self.game_state.get("surfing", False):
+            movement = "surf"
+        elif self.game_state.get("bicycle", False):
+            movement = "cycle"
+        elif running:
+            movement = "run"
+        else:
+            movement = "walk"
+        name = self._player_charset(movement)
+        if name:
+            self.player_graphic["character_name"] = name
+`
+
 const runtimeEssentialsUIPython = `from __future__ import annotations
 from pathlib import Path
 import pygame
@@ -869,6 +949,44 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	if err != nil {
 		return err
 	}
+	patched, err = replaceRuntimePythonSection(
+		patched,
+		"    def _player_charset(self) -> str:",
+		"\n    def _switch_value(",
+		runtimePlayerCharsetMethods,
+	)
+	if err != nil {
+		return fmt.Errorf("aggiornamento charset PlayerMetadata Essentials: %w", err)
+	}
+
+	oldProfileChange := []byte(`            self.game_state["player_profile"] = int(change.group(1)) + 1`)
+	newProfileChange := []byte(`            self.game_state["player_profile"] = int(change.group(1))`)
+	if !bytes.Contains(patched, oldProfileChange) {
+		return fmt.Errorf("runtime map_scene.py: pbChangePlayer non trovato")
+	}
+	patched = bytes.Replace(patched, oldProfileChange, newProfileChange, 1)
+
+	oldMotionCharset := []byte(`            running = action_pressed(self.project_root, "run")
+            cycling = bool(self.game_state.get("bicycle", False))`)
+	newMotionCharset := []byte(`            running = action_pressed(self.project_root, "run")
+            cycling = bool(self.game_state.get("bicycle", False))
+            self._refresh_player_charset(running=running)`)
+	if !bytes.Contains(patched, oldMotionCharset) {
+		return fmt.Errorf("runtime map_scene.py: aggiornamento movimento giocatore non trovato")
+	}
+	patched = bytes.Replace(patched, oldMotionCharset, newMotionCharset, 1)
+
+	oldStopCharset := []byte(`                if self.game_state.get("surfing", False) and self._terrain_tag(self.player_x, self.player_y) not in (5, 6, 7, 8, 9):
+                    self.game_state["surfing"] = False
+                if int(self.game_state.get("repel_steps",0))>0:`)
+	newStopCharset := []byte(`                if self.game_state.get("surfing", False) and self._terrain_tag(self.player_x, self.player_y) not in (5, 6, 7, 8, 9):
+                    self.game_state["surfing"] = False
+                self._refresh_player_charset(running=False)
+                if int(self.game_state.get("repel_steps",0))>0:`)
+	if !bytes.Contains(patched, oldStopCharset) {
+		return fmt.Errorf("runtime map_scene.py: fine movimento giocatore non trovata")
+	}
+	patched = bytes.Replace(patched, oldStopCharset, newStopCharset, 1)
 	oldName := []byte("                name = prompt_text(self.graphics, \"Come ti chiami?\", str(self.game_state.get(\"player_name\", \"Alex\")))")
 	newName := []byte("                from game.name_entry_scene import choose_player_name\n                name = choose_player_name(self)")
 	if !bytes.Contains(patched, oldName) {
@@ -1001,7 +1119,25 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	}
 
 	if err := writeBytesAtomic(mapPath, patched, 0644); err != nil {
-		return fmt.Errorf("aggiornamento UI eventi runtime: %w", err)
+		return fmt.Errorf("aggiornamento UI/eventi/charset runtime: %w", err)
+	}
+
+	itemEffectsPath := filepath.Join(dest, "game", "item_effects.py")
+	itemEffects, err := os.ReadFile(itemEffectsPath)
+	if err != nil {
+		return fmt.Errorf("lettura item_effects.py: %w", err)
+	}
+	oldBicycle := []byte(`        state["bicycle"] = not bool(state.get("bicycle", False)); return ItemUseResult(True, "Sei salito sulla bicicletta." if state["bicycle"] else "Sei sceso dalla bicicletta.", False)`)
+	newBicycle := []byte(`        state["bicycle"] = not bool(state.get("bicycle", False))
+        if scene is not None and hasattr(scene, "_refresh_player_charset"):
+            scene._refresh_player_charset(running=False)
+        return ItemUseResult(True, "Sei salito sulla bicicletta." if state["bicycle"] else "Sei sceso dalla bicicletta.", False)`)
+	if !bytes.Contains(itemEffects, oldBicycle) {
+		return fmt.Errorf("runtime item_effects.py: toggle bicicletta non trovato")
+	}
+	itemEffects = bytes.Replace(itemEffects, oldBicycle, newBicycle, 1)
+	if err := writeBytesAtomic(itemEffectsPath, itemEffects, 0644); err != nil {
+		return fmt.Errorf("aggiornamento charset bicicletta: %w", err)
 	}
 
 	titlePath := filepath.Join(dest, "game", "title_scene.py")
