@@ -203,9 +203,17 @@ def show_controls_help(graphics: Any, project_root: Path) -> None:
             "UI Essentials mancante: assets/Graphics/Pictures/Controls help/help_bg"
         )
 
-    # This is intentionally not the RPG Maker F1/F8 help. PML input bindings
-    # are configured from the in-game Options menu.
-    message = "Keyboard and controller controls are fully customizable in Game Settings."
+    # The converted project is native PML: fixed legacy key-help content is
+    # replaced by a pointer to PML's configurable input settings.
+    language = str(getattr(graphics, "language", "") or "").lower()
+    if not language:
+        language = str(getattr(graphics, "locale", "") or "").lower()
+    italian = language.startswith("it")
+    message = (
+        "I comandi di tastiera e controller sono completamente configurabili nelle Impostazioni di gioco."
+        if italian else
+        "Keyboard and controller controls are fully customizable in Game Settings."
+    )
 
     while True:
         for event in pygame.event.get():
