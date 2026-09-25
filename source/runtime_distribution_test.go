@@ -131,6 +131,7 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         "game/options_dialogue.py",
         "game/options_system.py",
         "game/title_scene.py",
+        "main.py",
         "config/options.json",
     } {
         data, err := readEmbeddedRuntimeFile(rel)
@@ -283,6 +284,16 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         if !strings.Contains(titleUIText, want) {
             t.Fatalf("Essentials load menu geometry missing %q", want)
         }
+    }
+
+    mainData, err := os.ReadFile(filepath.Join(root, "main.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    mainText := string(mainData)
+    if !strings.Contains(mainText, "WINDOW_SIZE = (512, 384)") ||
+        strings.Contains(mainText, "WINDOW_SIZE = (1336, 1000)") {
+        t.Fatal("runtime host fallback is not locked to native Essentials 512x384")
     }
 
     optionsData, err := os.ReadFile(filepath.Join(root, "game", "options_system.py"))
