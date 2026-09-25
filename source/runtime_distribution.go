@@ -254,7 +254,9 @@ from pathlib import Path
 import pygame
 from game.ui_assets import UIAssets
 from game.message_system import intl
-from game.options_system import event_action
+from game.options_system import event_action, load_settings, resolved_language
+
+PRESET_NAMES=("Alex","Sam","Nico","Ari","Eli")
 
 MODES=[
 "ABCDEFGHIJ ,.KLMNOPQRST '-UVWXYZ     ♂♀             0123456789   ",
@@ -286,6 +288,19 @@ def _player(scene,canvas,assets):
   st={'character_name':scene._player_charset(),'pattern':0,'direction':2}; fr=scene._character_frame(st)
   if fr: canvas.blit(fr,(88-fr.get_width()//2,76-fr.get_height()))
  except Exception: pass
+
+def choose_player_name(scene:Any):
+ root=Path(scene.project_root)
+ language=resolved_language(load_settings(root))
+ custom_label="Nome personalizzato" if language=="it" else "Custom name"
+ selected=scene._show_choices([custom_label,*PRESET_NAMES])
+ if scene.game_state.get("quit_requested"):
+  return None
+ if selected==0:
+  return show_name_entry(scene,None,0,10,"",1)
+ if 1<=selected<=len(PRESET_NAMES):
+  return PRESET_NAMES[selected-1]
+ return None
 
 def show_name_entry(scene:Any,helptext:str|None=None,minlength:int=1,maxlength:int=10,initial:str='',subject:int=0):
  root=Path(scene.project_root); a=UIAssets(root); bg=a.image('Naming/bg'); controls=a.image('Naming/overlay_controls')
@@ -411,7 +426,7 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return err
 	}
 	oldName := []byte("                name = prompt_text(self.graphics, \"Come ti chiami?\", str(self.game_state.get(\"player_name\", \"Alex\")))")
-	newName := []byte("                from game.name_entry_scene import show_name_entry\n                name = show_name_entry(self, None, 0, 10, \"\", 1)")
+	newName := []byte("                from game.name_entry_scene import choose_player_name\n                name = choose_player_name(self)")
 	if !bytes.Contains(patched, oldName) {
 		return fmt.Errorf("runtime map_scene.py: pbTrainerName non trovato")
 	}
@@ -456,6 +471,44 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return fmt.Errorf("runtime map_scene.py: concatenazione Show Text non trovata")
 	}
 	patched = bytes.Replace(patched, oldMessageJoin, newMessageJoin, 1)
+
+	oldChoiceStart := []byte("    def _show_choices(self, choices: list[str]) -> int:\n        if not choices:\n            return -1\n        selected = 0\n        font_path = self.project_root / \"assets\" / \"Fonts\" / \"power clear.ttf\"")
+	newChoiceStart := []byte("    def _show_choices(self, choices: list[str]) -> int:\n        if not choices:\n            return -1\n        from game.options_system import event_action\n        selected = 0\n        font_path = self.project_root / \"assets\" / \"Fonts\" / \"power green.ttf\"")
+	if !bytes.Contains(patched, oldChoiceStart) {
+		return fmt.Errorf("runtime map_scene.py: finestra scelte non trovata")
+	}
+	patched = bytes.Replace(patched, oldChoiceStart, newChoiceStart, 1)
+
+	oldChoiceInput := []byte(`                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP:
+                        selected = (selected - 1) % len(choices)
+                    elif event.key == pygame.K_DOWN:
+                        selected = (selected + 1) % len(choices)
+                    elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
+                        return selected
+                    elif event.key == pygame.K_ESCAPE:
+                        cancel = getattr(self, "_choice_cancel_type", 0)
+                        if cancel == 5:
+                            return 4
+                        if 1 <= cancel <= len(choices):
+                            return cancel - 1`)
+	newChoiceInput := []byte(`                action = event_action(self.project_root, event)
+                if action == "up":
+                    selected = (selected - 1) % len(choices)
+                elif action == "down":
+                    selected = (selected + 1) % len(choices)
+                elif action == "confirm":
+                    return selected
+                elif action == "cancel":
+                    cancel = getattr(self, "_choice_cancel_type", 0)
+                    if cancel == 5:
+                        return 4
+                    if 1 <= cancel <= len(choices):
+                        return cancel - 1`)
+	if !bytes.Contains(patched, oldChoiceInput) {
+		return fmt.Errorf("runtime map_scene.py: input finestra scelte non trovato")
+	}
+	patched = bytes.Replace(patched, oldChoiceInput, newChoiceInput, 1)
 
 	if err := writeBytesAtomic(mapPath, patched, 0644); err != nil {
 		return fmt.Errorf("aggiornamento UI eventi runtime: %w", err)
