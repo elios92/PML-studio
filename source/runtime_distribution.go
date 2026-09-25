@@ -692,6 +692,90 @@ def title_wait(scene):
         scene.graphics.update()
 `
 
+const runtimeEssentialsChoiceMethod = `    def _show_choices(self, choices: list[str]) -> int:
+        if not choices:
+            return -1
+        from game.essentials_ui import BASE_W, BASE_H, blit_logical_overlay, draw_windowskin, load_windowskin, skin_metrics
+        from game.options_system import event_action, load_settings
+
+        selected = 0
+        font_path = self.project_root / "assets" / "Fonts" / "power green.ttf"
+        font = pygame.font.Font(str(font_path) if font_path.is_file() else None, 27)
+        settings = load_settings(self.project_root)
+        skin = load_windowskin(self.project_root, "menu", int(settings.get("menu_frame", 0) or 0))
+        left, top, right, bottom, _ = skin_metrics(skin)
+        text_width = max(font.size(str(choice))[0] for choice in choices)
+        width = min(BASE_W, max(left + right + 1, text_width + left + right + 36))
+        height = min(BASE_H, top + bottom + (len(choices) * 32))
+        last = self.game_state.get("_last_message_rect")
+        if isinstance(last, list) and len(last) == 4:
+            mx, my, mw, mh = (int(v) for v in last)
+            y = my - height
+            if y < 0:
+                y = my + mh
+                if y + height > BASE_H:
+                    y = my - height
+            x = mx + mw - width
+        else:
+            x, y = BASE_W - width, 0
+        x = max(0, min(BASE_W - width, x))
+        y = max(0, min(BASE_H - height, y))
+        background = self.graphics.screen.copy()
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.game_state["quit_requested"] = True
+                    return selected
+                action = event_action(self.project_root, event)
+                if action == "up":
+                    selected = (selected - 1) % len(choices)
+                elif action == "down":
+                    selected = (selected + 1) % len(choices)
+                elif action == "confirm":
+                    return selected
+                elif action == "cancel":
+                    cancel = getattr(self, "_choice_cancel_type", 0)
+                    if cancel == 5:
+                        return 4
+                    if 1 <= cancel <= len(choices):
+                        return cancel - 1
+
+            self.graphics.screen.blit(background, (0, 0))
+            logical = pygame.Surface((BASE_W, BASE_H), pygame.SRCALPHA)
+            draw_windowskin(logical, skin, (x, y, width, height))
+            for row, choice in enumerate(choices):
+                ty = y + top + row * 32
+                base, shadow = (80, 80, 88), (160, 160, 168)
+                if row == selected:
+                    cy = ty + 13
+                    pygame.draw.polygon(logical, base, [(x + left + 3, cy - 5), (x + left + 11, cy), (x + left + 3, cy + 5)])
+                label = str(choice)
+                sh = font.render(label, True, shadow)
+                fg = font.render(label, True, base)
+                tx = x + left + 18
+                logical.blit(sh, (tx + 2, ty + 2))
+                logical.blit(fg, (tx, ty))
+            blit_logical_overlay(self.graphics.screen, logical)
+            self.graphics.update()
+`
+
+
+func replaceRuntimePythonSection(data []byte, startMarker, endMarker, replacement string) ([]byte, error) {
+	text := string(data)
+	start := strings.Index(text, startMarker)
+	if start < 0 {
+		return nil, fmt.Errorf("runtime Python: sezione iniziale non trovata: %s", strings.TrimSpace(startMarker))
+	}
+	endRel := strings.Index(text[start+len(startMarker):], endMarker)
+	if endRel < 0 {
+		return nil, fmt.Errorf("runtime Python: sezione finale non trovata dopo %s", strings.TrimSpace(startMarker))
+	}
+	end := start + len(startMarker) + endRel
+	return []byte(text[:start] + replacement + text[end:]), nil
+}
+
+
 func patchRuntimeButtonEventScene(data []byte) ([]byte, error) {
 	text := string(data)
 	marker := `if "pbEventScreen(ButtonEventScene)" in script:`
