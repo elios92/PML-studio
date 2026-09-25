@@ -3,6 +3,8 @@
 package main
 
 import (
+    "os"
+    "path/filepath"
     "strings"
     "testing"
 )
@@ -61,7 +63,135 @@ func TestRuntimeControlsHelpUsesImportedEssentialsAsset(t *testing.T) {
     }
     for _, forbidden := range []string{"F1", "F8", "Frecce: muovi", "F9: debug"} {
         if strings.Contains(src, forbidden) {
-            t.Fatalf("controls help must not expose fixed RPG Maker key text %q", forbidden)
+            t.Fatalf("controls help must not expose legacy Essentials fixed-key text %q", forbidden)
         }
+    }
+}
+
+
+func TestDetectEssentialsProjectLanguage(t *testing.T) {
+    rows := make([]any, 25)
+    rows[24] = map[string]any{"Yes": "Yes", "Cancel": "Cancel", "Your name?": "Your name?"}
+    if got := detectEssentialsProjectLanguage(rows); got != "en" {
+        t.Fatalf("English Essentials catalog detected as %q", got)
+    }
+    rows[24] = map[string]any{"Yes": "Sì", "Cancel": "Annulla", "Your name?": "Il tuo nome?"}
+    if got := detectEssentialsProjectLanguage(rows); got != "it" {
+        t.Fatalf("Italian Essentials catalog detected as %q", got)
+    }
+}
+
+func TestRuntimeNameEntryUsesImportedEssentialsAssets(t *testing.T) {
+    src := runtimeNameEntryPython
+    for _, want := range []string{
+        "Naming/bg",
+        "Naming/overlay_controls",
+        "Naming/overlay_tab_",
+        "Naming/cursor_1",
+        "Naming/cursor_2",
+        "Naming/cursor_3",
+        "Naming/icon_mode",
+        "Naming/icon_shadow",
+        "power green.ttf",
+        "event_action(root,e)",
+        "_txt(tab,font,ch,44+col*32,24+row*38,True)",
+    } {
+        if !strings.Contains(src, want) {
+            t.Fatalf("Essentials naming UI missing %q", want)
+        }
+    }
+    for _, forbidden := range []string{"prompt_text", "Come ti chiami?"} {
+        if strings.Contains(src, forbidden) {
+            t.Fatalf("generic PML text-entry path survived in naming UI: %q", forbidden)
+        }
+    }
+}
+
+func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
+    root := t.TempDir()
+    for _, rel := range []string{
+        "game/map_scene.py",
+        "game/options_dialogue.py",
+        "game/options_system.py",
+        "config/options.json",
+    } {
+        data, err := readEmbeddedRuntimeFile(rel)
+        if err != nil {
+            t.Fatalf("read embedded %s: %v", rel, err)
+        }
+        path := filepath.Join(root, filepath.FromSlash(rel))
+        if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+            t.Fatal(err)
+        }
+        if err := os.WriteFile(path, data, 0644); err != nil {
+            t.Fatal(err)
+        }
+    }
+    if err := os.MkdirAll(filepath.Join(root, "converted"), 0755); err != nil {
+        t.Fatal(err)
+    }
+    if err := os.WriteFile(
+        filepath.Join(root, "converted", "messages.json"),
+        []byte("{\"detected_language\":\"en\",\"message_types\":[]}"),
+        0644,
+    ); err != nil {
+        t.Fatal(err)
+    }
+
+    if err := installRuntimeUICompatibilityPatch(root); err != nil {
+        t.Fatalf("runtime UI compatibility patch failed: %v", err)
+    }
+
+    mapData, err := os.ReadFile(filepath.Join(root, "game", "map_scene.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    mapText := string(mapData)
+    for _, want := range []string{
+        "show_controls_help(self.graphics, self.project_root)",
+        `show_name_entry(self, None, 0, 10, "", 1)`,
+        "pbEnterText",
+        "value = show_name_entry(self, helptext, minlength, maxlength, initial)",
+    } {
+        if !strings.Contains(mapText, want) {
+            t.Fatalf("patched map scene missing %q", want)
+        }
+    }
+    if strings.Contains(mapText, `prompt_text(self.graphics, "Come ti chiami?"`) {
+        t.Fatal("pbTrainerName still uses the generic text prompt")
+    }
+
+    dialogueData, err := os.ReadFile(filepath.Join(root, "game", "options_dialogue.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    dialogueText := string(dialogueData)
+    for _, want := range []string{`\l\[(\d+)\]`, `"<ac>"`, `text.split("\n")`} {
+        if !strings.Contains(dialogueText, want) {
+            t.Fatalf("Essentials dialogue parser missing %q", want)
+        }
+    }
+
+    optionsData, err := os.ReadFile(filepath.Join(root, "game", "options_system.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    optionsText := string(optionsData)
+    if !strings.Contains(optionsText, `"text_entry": "cursor"`) {
+        t.Fatal("Essentials cursor text-entry default was not restored")
+    }
+    if !strings.Contains(optionsText, `"language": "en"`) ||
+        !strings.Contains(optionsText, `settings["language"] = "en"`) {
+        t.Fatal("source Essentials language was not propagated to runtime options")
+    }
+
+    configData, err := os.ReadFile(filepath.Join(root, "config", "options.json"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    configText := string(configData)
+    if !strings.Contains(configText, `"text_entry": "cursor"`) ||
+        !strings.Contains(configText, `"language": "en"`) {
+        t.Fatal("source Essentials UI defaults were not propagated to config/options.json")
     }
 }
