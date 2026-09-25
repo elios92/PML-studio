@@ -249,6 +249,106 @@ def show_controls_help(graphics: Any, project_root: Path) -> None:
         graphics.update()
 `
 
+const runtimeNameEntryPython = `from __future__ import annotations
+from typing import Any
+from pathlib import Path
+import pygame
+from game.ui_assets import UIAssets
+from game.message_system import intl
+
+MODES=[
+"ABCDEFGHIJ ,.KLMNOPQRST '-UVWXYZ     ♂♀             0123456789   ",
+"abcdefghij ,.klmnopqrst '-uvwxyz     ♂♀             0123456789   ",
+"ÀÁÂÄÃàáâäã ÆæÈÉÊË èéêë  ÇçÌÍÎÏ ìíîï  ŒœÒÓÔÖÕòóôöõ ÑñÙÚÛÜ ùúûü  Ýý",
+",.:;…•!?¡¿ ♂♀“”‘’﴾﴿*~_^ ΡΚ@#&%+-×÷/= ΠΜ◎○□△♠♥♦♣★✨  $♈♌♒♐♩♪♫☽☾    "
+]
+ROWS,COLS=13,5
+CTRL={-6:(44,120,2),-5:(106,120,2),-4:(168,120,2),-3:(230,120,2),-2:(314,120,3),-1:(394,120,3)}
+
+def _font(root:Path):
+ p=root/'assets'/'Fonts'/'power green.ttf'
+ return pygame.font.Font(str(p) if p.is_file() else None,27)
+
+def _txt(dst,font,text,x,y,center=False):
+ a=font.render(str(text),True,(160,160,160)); b=font.render(str(text),True,(16,24,32))
+ if center:x-=b.get_width()//2
+ dst.blit(a,(x+2,y+2));dst.blit(b,(x,y))
+
+def _present(graphics,canvas):
+ s=graphics.screen; w,h=s.get_size(); k=min(w/512,h/384); dw,dh=round(512*k),round(384*k)
+ img=canvas if (dw,dh)==(512,384) else pygame.transform.scale(canvas,(dw,dh))
+ s.fill((0,0,0));s.blit(img,((w-dw)//2,(h-dh)//2));graphics.update()
+
+def _player(scene,canvas,assets):
+ sh=assets.image('Naming/icon_shadow')
+ if sh: canvas.blit(sh,(66,64))
+ try:
+  st={'character_name':scene._player_charset(),'pattern':0,'direction':2}; fr=scene._character_frame(st)
+  if fr: canvas.blit(fr,(88-fr.get_width()//2,76-fr.get_height()))
+ except Exception: pass
+
+def show_name_entry(scene:Any,helptext:str|None=None,minlength:int=1,maxlength:int=10,initial:str=''):
+ root=Path(scene.project_root); a=UIAssets(root); bg=a.image('Naming/bg'); controls=a.image('Naming/overlay_controls')
+ tabs=[a.image(f'Naming/overlay_tab_{i}') for i in range(1,5)]; curs=[None,a.image('Naming/cursor_1'),a.image('Naming/cursor_2'),a.image('Naming/cursor_3')]
+ if not bg or not controls or any(x is None for x in tabs[0:4]) or any(x is None for x in curs[1:]):
+  raise RuntimeError('UI Essentials Naming incompleta in assets/Graphics/Pictures/Naming')
+ helptext=helptext or intl('Your name?'); val=str(initial or '')[:maxlength]; mode=0; cur=0; font=_font(root)
+ def nonempty(p): return 0<=p<len(MODES[mode]) and MODES[mode][p]!=' '
+ while True:
+  c=bg.copy();_player(scene,c,a);_txt(c,font,helptext,160,18)
+  for i,ch in enumerate(val):_txt(c,font,ch,166+i*24,54)
+  for i in range(maxlength):
+   y=78 if i==min(len(val),maxlength-1) else 82;pygame.draw.rect(c,(168,184,184),(162+i*24,y+2,22,4));pygame.draw.rect(c,(16,24,32),(160+i*24,y,22,4))
+  tab=tabs[mode].copy()
+  for row in range(COLS):
+   for col in range(ROWS):
+    p=row*ROWS+col; ch=MODES[mode][p] if p<len(MODES[mode]) else ' ';_txt(tab,font,ch,22+col*32,12+row*38)
+  c.blit(tab,(22,162));c.blit(controls,(16,96))
+  icon=a.image('Naming/icon_mode')
+  if icon and icon.get_width()>mode*60:c.blit(icon,(44+mode*62,120),(mode*60,0,min(60,icon.get_width()-mode*60),min(44,icon.get_height())))
+  if cur<0:x,y,t=CTRL[cur];c.blit(curs[t],(x,y))
+  else:c.blit(curs[1],(52+32*(cur%ROWS),180+38*(cur//ROWS)))
+  _present(scene.graphics,c)
+  for e in pygame.event.get():
+   if e.type==pygame.QUIT: scene.game_state['quit_requested']=True; return None
+   if e.type!=pygame.KEYDOWN: continue
+   if e.key==pygame.K_ESCAPE:
+    if val:val=val[:-1]
+    elif minlength==0:return ''
+    continue
+   if e.key==pygame.K_TAB:mode=(mode+1)%4;continue
+   if e.key in (pygame.K_LEFT,pygame.K_RIGHT,pygame.K_UP,pygame.K_DOWN):
+    if cur<0:
+     order=[-6,-5,-4,-3,-2,-1];i=order.index(cur)
+     if e.key==pygame.K_LEFT:cur=order[(i-1)%6]
+     elif e.key==pygame.K_RIGHT:cur=order[(i+1)%6]
+     elif e.key==pygame.K_DOWN:cur={-6:0,-5:2,-4:4,-3:6,-2:9,-1:11}[cur]
+     else:cur={-6:52,-5:54,-4:56,-3:58,-2:61,-1:63}[cur]
+    else:
+     row,col=divmod(cur,ROWS)
+     if e.key==pygame.K_LEFT:
+      for _ in range(ROWS):
+       col=(col-1)%ROWS;p=row*ROWS+col
+       if nonempty(p):cur=p;break
+     elif e.key==pygame.K_RIGHT:
+      for _ in range(ROWS):
+       col=(col+1)%ROWS;p=row*ROWS+col
+       if nonempty(p):cur=p;break
+     elif e.key==pygame.K_UP:cur=(-6 if col<=1 else -5 if col<=3 else -4 if col<=5 else -3 if col<=7 else -2 if col<=10 else -1) if row==0 else (row-1)*ROWS+col
+     else:cur=(-6 if col<=1 else -5 if col<=3 else -4 if col<=5 else -3 if col<=7 else -2 if col<=10 else -1) if row==COLS-1 else (row+1)*ROWS+col
+    continue
+   if e.key in (pygame.K_RETURN,pygame.K_KP_ENTER,pygame.K_SPACE):
+    if cur==-2:val=val[:-1]
+    elif cur==-1:
+     if len(val)>=minlength:return val
+    elif cur in (-6,-5,-4,-3):mode=cur+6
+    elif cur>=0 and nonempty(cur):
+     if len(val)>=maxlength:val=val[:-1]
+     val+=MODES[mode][cur]
+     if mode==0 and len(val)==1:mode=1
+     if len(val)>=maxlength:cur=-1
+`
+
 func patchRuntimeButtonEventScene(data []byte) ([]byte, error) {
 	text := string(data)
 	marker := `if "pbEventScreen(ButtonEventScene)" in script:`
@@ -275,6 +375,11 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	if err := writeBytesAtomic(controlsPath, []byte(runtimeControlsHelpPython), 0644); err != nil {
 		return fmt.Errorf("installazione UI controlli PML: %w", err)
 	}
+	nameEntryPath := filepath.Join(dest, "game", "name_entry_scene.py")
+	if err := writeBytesAtomic(nameEntryPath, []byte(runtimeNameEntryPython), 0644); err != nil {
+		return fmt.Errorf("installazione UI Naming Essentials: %w", err)
+	}
+
 	mapPath := filepath.Join(dest, "game", "map_scene.py")
 	data, err := os.ReadFile(mapPath)
 	if err != nil {
@@ -284,8 +389,57 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	if err != nil {
 		return err
 	}
+	oldName := []byte("                name = prompt_text(self.graphics, \"Come ti chiami?\", str(self.game_state.get(\"player_name\", \"Alex\")))")
+	newName := []byte("                from game.name_entry_scene import show_name_entry\n                name = show_name_entry(self, None, 1, 10, \"\")")
+	if !bytes.Contains(patched, oldName) {
+		return fmt.Errorf("runtime map_scene.py: pbTrainerName non trovato")
+	}
+	patched = bytes.Replace(patched, oldName, newName, 1)
 	if err := writeBytesAtomic(mapPath, patched, 0644); err != nil {
-		return fmt.Errorf("aggiornamento ButtonEventScene runtime: %w", err)
+		return fmt.Errorf("aggiornamento UI eventi runtime: %w", err)
+	}
+
+	dialoguePath := filepath.Join(dest, "game", "options_dialogue.py")
+	dialogue, err := os.ReadFile(dialoguePath)
+	if err != nil {
+		return fmt.Errorf("lettura options_dialogue.py: %w", err)
+	}
+	oldHeader := []byte("def show_dialogue_with_speed(scene: Any, text: str) -> None:\n    from game.dialogue_layout import dialogue_pages\n\n    background = scene.graphics.screen.copy()")
+	newHeader := []byte("def show_dialogue_with_speed(scene: Any, text: str) -> None:\n    import re\n    from game.dialogue_layout import dialogue_pages\n\n    linecount = 3\n    match = re.search(r\"\\\\l\\[(\\d+)\\]\", str(text), re.I)\n    if match:\n        linecount = max(1, int(match.group(1)))\n    centered = \"<ac>\" in str(text).lower()\n    text = re.sub(r\"\\\\l\\[\\d+\\]\", \"\", str(text), flags=re.I)\n    text = re.sub(r\"\\\\c\\[\\d+\\]\", \"\", text, flags=re.I)\n    text = re.sub(r\"</?ac>\", \"\", text, flags=re.I)\n    text = text.replace(\"\\\\b\", \"\").replace(\"\\\\r\", \"\")\n\n    background = scene.graphics.screen.copy()")
+	if !bytes.Contains(dialogue, oldHeader) {
+		return fmt.Errorf("runtime options_dialogue.py: parser messaggi non trovato")
+	}
+	dialogue = bytes.Replace(dialogue, oldHeader, newHeader, 1)
+	dialogue = bytes.Replace(dialogue, []byte("    height = 130"), []byte("    framed = int(options.get(\"frame\", 0)) == 0\n    height = min(screen.get_height(), max(64, linecount * 32 + (32 if framed else 0)))"), 1)
+	dialogue = bytes.Replace(dialogue, []byte("    pages = dialogue_pages(text, font, box.width - 44)"), []byte("    pages = [text.split(\"\\n\")] if centered else dialogue_pages(text, font, box.width - 44, rows=linecount)"), 1)
+	dialogue = bytes.Replace(dialogue, []byte("            framed = int(options.get(\"frame\", 0)) == 0\n            if framed:"), []byte("            if framed:"), 1)
+	oldDraw := []byte("                if not framed:\n                    screen.blit(\n                        font.render(shown, True, (0, 0, 0)),\n                        (box.x + 23, box.y + 21 + row * 31),\n                    )\n                rendered = font.render(\n                    shown, True, (25, 35, 50) if framed else (255, 255, 255)\n                )\n                screen.blit(rendered, (box.x + 22, box.y + 20 + row * 31))")
+	newDraw := []byte("                main = (80, 80, 88) if framed else (248, 248, 248)\n                shadow = (160, 160, 168) if framed else (72, 80, 88)\n                rendered_shadow = font.render(shown, True, shadow)\n                rendered = font.render(shown, True, main)\n                tx = box.centerx - rendered.get_width() // 2 if centered else box.x + 22\n                ty = box.y + 20 + row * 31\n                screen.blit(rendered_shadow, (tx + 2, ty + 2))\n                screen.blit(rendered, (tx, ty))")
+	if !bytes.Contains(dialogue, oldDraw) {
+		return fmt.Errorf("runtime options_dialogue.py: renderer testo non trovato")
+	}
+	dialogue = bytes.Replace(dialogue, oldDraw, newDraw, 1)
+	if err := writeBytesAtomic(dialoguePath, dialogue, 0644); err != nil {
+		return fmt.Errorf("aggiornamento dialoghi Essentials: %w", err)
+	}
+
+	optionsPath := filepath.Join(dest, "game", "options_system.py")
+	optionsData, err := os.ReadFile(optionsPath)
+	if err != nil {
+		return fmt.Errorf("lettura options_system.py: %w", err)
+	}
+	optionsData = bytes.Replace(optionsData, []byte("\"text_entry\": \"keyboard\","), []byte("\"text_entry\": \"cursor\","), 1)
+	if err := writeBytesAtomic(optionsPath, optionsData, 0644); err != nil {
+		return fmt.Errorf("aggiornamento Text Entry: %w", err)
+	}
+	configPath := filepath.Join(dest, "config", "options.json")
+	configData, err := os.ReadFile(configPath)
+	if err != nil {
+		return fmt.Errorf("lettura config/options.json: %w", err)
+	}
+	configData = bytes.Replace(configData, []byte("\"text_entry\": \"keyboard\""), []byte("\"text_entry\": \"cursor\""), 1)
+	if err := writeBytesAtomic(configPath, configData, 0644); err != nil {
+		return fmt.Errorf("aggiornamento config Text Entry: %w", err)
 	}
 	return nil
 }
