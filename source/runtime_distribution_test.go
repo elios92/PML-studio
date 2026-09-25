@@ -130,6 +130,7 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         "game/map_scene.py",
         "game/options_dialogue.py",
         "game/options_system.py",
+        "game/item_effects.py",
         "game/title_scene.py",
         "main.py",
         "config/options.json",
@@ -186,6 +187,17 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         `load_windowskin(self.project_root, "menu"`,
         "draw_windowskin(logical, skin",
         `self.game_state.get("_last_message_rect")`,
+        `self.game_state["player_profile"] = int(change.group(1))`,
+        "_player_metadata_charsets",
+        `self.project_root / "converted" / "PBS" / "metadata.txt"`,
+        `values.get("runcharset") or walk`,
+        `values.get("cyclecharset") or run`,
+        `values.get("surfcharset") or cycle`,
+        `values.get("divecharset") or surf`,
+        `values.get("fishcharset") or walk`,
+        `values.get("surffishcharset") or fish`,
+        "self._refresh_player_charset(running=running)",
+        "self._refresh_player_charset(running=False)",
     } {
         if !strings.Contains(mapText, want) {
             t.Fatalf("patched map scene missing %q", want)
@@ -193,6 +205,9 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
     }
     if strings.Contains(mapText, `prompt_text(self.graphics, "Come ti chiami?"`) {
         t.Fatal("pbTrainerName still uses the generic text prompt")
+    }
+    if strings.Contains(mapText, `self.game_state["player_profile"] = int(change.group(1)) + 1`) {
+        t.Fatal("pbChangePlayer must preserve the Essentials PlayerMetadata ID exactly")
     }
     if strings.Contains(mapText, "border_radius=8") {
         t.Fatal("generic rounded PML choice panel survived instead of Essentials menu windowskin")
@@ -322,6 +337,21 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
     if !strings.Contains(optionsText, `"language": "en"`) ||
         !strings.Contains(optionsText, `settings["language"] = "en"`) {
         t.Fatal("source Essentials language was not propagated to runtime options")
+    }
+
+    itemEffectsData, err := os.ReadFile(filepath.Join(root, "game", "item_effects.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    itemEffectsText := string(itemEffectsData)
+    for _, want := range []string{
+        `state["bicycle"] = not bool(state.get("bicycle", False))`,
+        `hasattr(scene, "_refresh_player_charset")`,
+        `scene._refresh_player_charset(running=False)`,
+    } {
+        if !strings.Contains(itemEffectsText, want) {
+            t.Fatalf("bicycle charset refresh missing %q", want)
+        }
     }
 
     configData, err := os.ReadFile(filepath.Join(root, "config", "options.json"))
