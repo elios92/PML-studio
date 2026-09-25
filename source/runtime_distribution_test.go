@@ -95,12 +95,13 @@ func TestRuntimeNameEntryUsesImportedEssentialsAssets(t *testing.T) {
         "power green.ttf",
         "event_action(root,e)",
         "_txt(tab,font,ch,44+col*32,24+row*38,True)",
+        "action=event_action(root,e)",
     } {
         if !strings.Contains(src, want) {
             t.Fatalf("Essentials naming UI missing %q", want)
         }
     }
-    for _, forbidden := range []string{"prompt_text", "Come ti chiami?"} {
+    for _, forbidden := range []string{"prompt_text", "Come ti chiami?", "elif minlength==0:return ''"} {
         if strings.Contains(src, forbidden) {
             t.Fatalf("generic PML text-entry path survived in naming UI: %q", forbidden)
         }
@@ -152,6 +153,7 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         `show_name_entry(self, None, 0, 10, "", 1)`,
         "pbEnterText",
         "value = show_name_entry(self, helptext, minlength, maxlength, initial)",
+        "numeric_args = re.sub",
     } {
         if !strings.Contains(mapText, want) {
             t.Fatalf("patched map scene missing %q", want)
@@ -166,7 +168,7 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         t.Fatal(err)
     }
     dialogueText := string(dialogueData)
-    for _, want := range []string{`\l\[(\d+)\]`, `"<ac>"`, `text.split("\n")`} {
+    for _, want := range []string{`\l\[(\d+)\]`, `"<ac>"`, `text.split("\n")`, "ui_scale", "line_height"} {
         if !strings.Contains(dialogueText, want) {
             t.Fatalf("Essentials dialogue parser missing %q", want)
         }
