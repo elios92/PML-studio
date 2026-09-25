@@ -333,6 +333,26 @@ func validateNoRuntimeTitlePlaceholder(dest string) error {
 }
 
 
+func nativeCoveredEssentialsHotfixHashes(dest string) map[string]bool {
+	covered := map[string]bool{}
+	data, err := os.ReadFile(filepath.Join(dest, "converted", "essentials_hotfixes.json"))
+	if err != nil {
+		return covered
+	}
+	var profile essentialsHotfixProfile
+	if json.Unmarshal(data, &profile) != nil || !profile.Detected || !profile.ExactOfficial107 ||
+		profile.NativeProfile != essentialsV201HotfixProfile {
+		return covered
+	}
+	for _, row := range profile.Files {
+		if wanted := essentialsV201Hotfix107SHA256[row.Name]; wanted != "" &&
+			strings.EqualFold(strings.TrimSpace(row.SHA256), wanted) {
+			covered[strings.ToLower(wanted)] = true
+		}
+	}
+	return covered
+}
+
 // validateRubyRuntimeCoverage prevents a preserved Ruby customization from
 // being mistaken for a functional Python conversion. The current runtime has
 // no general Ruby executor/translator, so any modified/custom/plugin script
@@ -340,6 +360,7 @@ func validateNoRuntimeTitlePlaceholder(dest string) error {
 func validateRubyRuntimeCoverage(dest string) error {
 	type scriptIndexEntry struct {
 		Name           string `json:"name"`
+		SHA256         string `json:"sha256"`
 		Classification string `json:"classification"`
 	}
 	type gap struct {
@@ -349,6 +370,7 @@ func validateRubyRuntimeCoverage(dest string) error {
 		Reason         string `json:"reason"`
 	}
 	var gaps []gap
+	coveredHotfixHashes := nativeCoveredEssentialsHotfixHashes(dest)
 	for _, rel := range []string{
 		filepath.Join("converted", "scripts_ruby", "index.json"),
 		filepath.Join("converted", "plugin_scripts_ruby", "index.json"),
@@ -368,6 +390,9 @@ func validateRubyRuntimeCoverage(dest string) error {
 		for _, entry := range entries {
 			switch strings.ToLower(strings.TrimSpace(entry.Classification)) {
 			case "core_modified", "custom", "plugin":
+				if coveredHotfixHashes[strings.ToLower(strings.TrimSpace(entry.SHA256))] {
+					continue
+				}
 				gaps = append(gaps, gap{
 					Source: filepath.ToSlash(rel),
 					Name: entry.Name,
