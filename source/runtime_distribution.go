@@ -287,22 +287,25 @@ def _player(scene,canvas,assets):
   if fr: canvas.blit(fr,(88-fr.get_width()//2,76-fr.get_height()))
  except Exception: pass
 
-def show_name_entry(scene:Any,helptext:str|None=None,minlength:int=1,maxlength:int=10,initial:str=''):
+def show_name_entry(scene:Any,helptext:str|None=None,minlength:int=1,maxlength:int=10,initial:str='',subject:int=0):
  root=Path(scene.project_root); a=UIAssets(root); bg=a.image('Naming/bg'); controls=a.image('Naming/overlay_controls')
  tabs=[a.image(f'Naming/overlay_tab_{i}') for i in range(1,5)]; curs=[None,a.image('Naming/cursor_1'),a.image('Naming/cursor_2'),a.image('Naming/cursor_3')]
  if not bg or not controls or any(x is None for x in tabs[0:4]) or any(x is None for x in curs[1:]):
   raise RuntimeError('UI Essentials Naming incompleta in assets/Graphics/Pictures/Naming')
- helptext=helptext or intl('Your name?'); val=str(initial or '')[:maxlength]; mode=0; cur=0; font=_font(root)
+ if helptext is None: helptext=intl('Your name?')
+ val=str(initial or '')[:maxlength]; mode=0; cur=0; font=_font(root)
  def nonempty(p): return 0<=p<len(MODES[mode]) and MODES[mode][p]!=' '
  while True:
-  c=bg.copy();_player(scene,c,a);_txt(c,font,helptext,160,18)
+  c=bg.copy()
+  if subject==1:_player(scene,c,a)
+  _txt(c,font,helptext,160,18)
   for i,ch in enumerate(val):_txt(c,font,ch,166+i*24,54)
   for i in range(maxlength):
    y=78 if i==min(len(val),maxlength-1) else 82;pygame.draw.rect(c,(168,184,184),(162+i*24,y+2,22,4));pygame.draw.rect(c,(16,24,32),(160+i*24,y,22,4))
   tab=tabs[mode].copy()
   for row in range(COLS):
    for col in range(ROWS):
-    p=row*ROWS+col; ch=MODES[mode][p] if p<len(MODES[mode]) else ' ';_txt(tab,font,ch,22+col*32,12+row*38)
+    p=row*ROWS+col; ch=MODES[mode][p] if p<len(MODES[mode]) else ' ';_txt(tab,font,ch,44+col*32,24+row*38,True)
   c.blit(tab,(22,162));c.blit(controls,(16,96))
   icon=a.image('Naming/icon_mode')
   if icon and icon.get_width()>mode*60:c.blit(icon,(44+mode*62,120),(mode*60,0,min(60,icon.get_width()-mode*60),min(44,icon.get_height())))
@@ -409,7 +412,7 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return err
 	}
 	oldName := []byte("                name = prompt_text(self.graphics, \"Come ti chiami?\", str(self.game_state.get(\"player_name\", \"Alex\")))")
-	newName := []byte("                from game.name_entry_scene import show_name_entry\n                name = show_name_entry(self, None, 1, 10, \"\")")
+	newName := []byte("                from game.name_entry_scene import show_name_entry\n                name = show_name_entry(self, None, 0, 10, \"\", 1)")
 	if !bytes.Contains(patched, oldName) {
 		return fmt.Errorf("runtime map_scene.py: pbTrainerName non trovato")
 	}
