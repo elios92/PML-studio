@@ -29,7 +29,8 @@ func TestPatchRuntimeButtonEventScene(t *testing.T) {
     input := []byte(`        if "pbEventScreen(ButtonEventScene)" in script:
             self._show_text_screen("Comandi", "Frecce: muovi • INVIO: conferma • ESC: annulla • F9: debug")
             return
-        if "pbShowMap" in script:
+        show_map = re.search(r"pbShowMap", script)
+        if show_map:
             return`)
     gotBytes, err := patchRuntimeButtonEventScene(input)
     if err != nil {
@@ -42,7 +43,8 @@ func TestPatchRuntimeButtonEventScene(t *testing.T) {
     for _, want := range []string{
         "from game.controls_help import show_controls_help",
         "show_controls_help(self.graphics, self.project_root)",
-        `if "pbShowMap" in script:`,
+        `show_map = re.search(r"pbShowMap", script)`,
+        "if show_map:",
     } {
         if !strings.Contains(got, want) {
             t.Fatalf("missing %q after patch: %s", want, got)
