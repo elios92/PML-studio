@@ -265,7 +265,7 @@ func patchRuntimeButtonEventScene(data []byte) ([]byte, error) {
 	}
 	end := pos + len(marker) + nextRel
 	replacement := marker + "\n" + indent + "    from game.controls_help import show_controls_help\n" +
-		indent + "    show_controls_help(self.graphics, self.root)\n" +
+		indent + "    show_controls_help(self.graphics, self.project_root)\n" +
 		indent + "    return"
 	return []byte(text[:pos] + replacement + text[end:]), nil
 }
