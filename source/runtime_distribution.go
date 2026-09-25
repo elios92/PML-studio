@@ -1058,6 +1058,19 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return fmt.Errorf("aggiornamento UI titolo/load Essentials: %w", err)
 	}
 
+	mainPath := filepath.Join(dest, "main.py")
+	mainData, err := os.ReadFile(mainPath)
+	if err != nil {
+		return fmt.Errorf("lettura runtime main.py: %w", err)
+	}
+	if !bytes.Contains(mainData, []byte("WINDOW_SIZE = (1336, 1000)")) {
+		return fmt.Errorf("runtime main.py: dimensione fallback legacy non trovata")
+	}
+	mainData = bytes.Replace(mainData, []byte("WINDOW_SIZE = (1336, 1000)"), []byte("WINDOW_SIZE = (512, 384)"), 1)
+	if err := writeBytesAtomic(mainPath, mainData, 0644); err != nil {
+		return fmt.Errorf("aggiornamento risoluzione fallback Essentials: %w", err)
+	}
+
 	dialoguePath := filepath.Join(dest, "game", "options_dialogue.py")
 	if err := writeBytesAtomic(dialoguePath, []byte(runtimeEssentialsDialoguePython), 0644); err != nil {
 		return fmt.Errorf("installazione renderer dialoghi Essentials: %w", err)
