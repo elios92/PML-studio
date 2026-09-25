@@ -18,10 +18,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: source/go.mod
           cache: false
@@ -55,7 +55,7 @@ jobs:
           if ((Get-Item $exe).Length -le 0) { throw "PML Studio.exe is empty" }
 
       - name: Upload Windows executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: PML-Studio-Windows-x64
           path: PML Studio.exe
