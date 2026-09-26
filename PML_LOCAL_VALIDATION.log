@@ -1,17 +1,23 @@
 PML Studio - Validazione Locale Windows
-Data: 24/09/2026 13:22:58,75
+Data: 26/09/2026  9:14:48,69
 
 [PASS] Struttura base e runtime template
 go version go1.27.1 windows/amd64
 
 [TEST] go test ./...
-# plmstudio [plmstudio.test]
-.\event_tools_runtime_bridge.go:68:13: undefined: replaceFileAtomicWindows
-.\event_tools_runtime_bridge.go:101:13: undefined: replaceFileAtomicWindows
-.\global_events_runtime_bridge.go:71:13: undefined: replaceFileAtomicWindows
-.\global_events_runtime_bridge.go:108:13: undefined: replaceFileAtomicWindows
-.\runtime_distribution.go:227:12: undefined: replaceFileAtomicWindows
-FAIL	plmstudio [build failed]
-FAIL
-[FAIL] go test ./... fallito. Vedi PML_LOCAL_VALIDATION.log
-RISULTATO FINALE: FAIL
+ok  	plmstudio	9.352s
+
+[TEST] go vet ./...
+folder_dialog_windows.go:82:24: possible misuse of unsafe.Pointer
+folder_dialog_windows.go:86:24: possible misuse of unsafe.Pointer
+folder_dialog_windows.go:107:17: possible misuse of unsafe.Pointer
+map_tree.go:703:18: possible misuse of unsafe.Pointer
+map_tree.go:738:28: possible misuse of unsafe.Pointer
+ui_theme_live.go:138:31: possible misuse of unsafe.Pointer
+[WARN] Go vet non bloccante: la baseline 5.1 contiene segnalazioni unsafe.Pointer note.
+
+[BUILD] PML Studio.exe temporaneo
+[PASS] Build Windows x64: 45302272 byte
+
+RISULTATO FINALE: PASS
+BUILD DI TEST: C:\Users\davide il boss\Documents\GitHub\PML-studio\test-build\PML Studio.exe

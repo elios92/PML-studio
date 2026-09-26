@@ -1,475 +1,186 @@
-11:21:47.496 [BOOT] startup
-11:21:47.553 [BOOT] main() START
-11:21:47.622 [UI] WM_SIZE #1 START
-11:21:47.622 [UI] layout() #1 START
-11:21:47.622 [UI] layout() #1 END duration=0s
-11:21:47.622 [UI] WM_SIZE #1 END duration=0s
-11:21:47.721 [UI] WM_SIZE #2 START
-11:21:47.721 [UI] layout() #2 START
-11:21:47.721 [UI] layout() #2 END duration=0s
-11:21:47.721 [UI] WM_SIZE #2 END duration=0s
-11:21:47.917 [UI] WM_SIZE #3 START
-11:21:47.917 [UI] WM_SIZE #3 END duration=0s
-11:21:47.921 [UI] WM_SIZE #4 START
-11:21:47.921 [UI] WM_SIZE #4 END duration=0s
-11:21:47.924 [UI] WM_SIZE #5 START
-11:21:47.924 [UI] WM_SIZE #5 END duration=0s
-11:21:47.927 [UI] WM_SIZE #6 START
-11:21:47.928 [UI] WM_SIZE #6 END duration=1ms
-11:21:47.932 [UI] WM_SIZE #7 START
-11:21:47.932 [UI] WM_SIZE #7 END duration=0s
-11:21:47.982 [UI] WM_COMMAND #1 id=1711 notify=1024
-11:21:47.982 [UI] WM_COMMAND #2 id=1711 notify=768
-11:21:47.998 [UI] WM_COMMAND #3 id=1721 notify=1024
-11:21:47.998 [UI] WM_COMMAND #4 id=1721 notify=768
-11:21:48.000 [UI] WM_COMMAND #5 id=1712 notify=1024
-11:21:48.001 [UI] WM_COMMAND #6 id=1712 notify=768
-11:21:48.004 [UI] WM_COMMAND #7 id=1713 notify=1024
-11:21:48.004 [UI] WM_COMMAND #8 id=1713 notify=768
-11:21:48.151 [UI] WM_COMMAND #9 id=2302 notify=1024
-11:21:48.151 [UI] WM_COMMAND #10 id=2302 notify=768
-11:21:48.390 [UI] layout() #3 START
-11:21:48.409 [UI] WM_SIZE #8 START
-11:21:48.409 [UI] WM_SIZE #8 END duration=0s
-11:21:48.455 [UI] WM_SIZE #9 START
-11:21:48.455 [UI] WM_SIZE #9 END duration=0s
-11:21:48.455 [UI] WM_SIZE #10 START
-11:21:48.455 [UI] WM_SIZE #10 END duration=0s
-11:21:48.456 [UI] WM_SIZE #11 START
-11:21:48.456 [UI] WM_SIZE #11 END duration=0s
-11:21:48.457 [UI] WM_SIZE #12 START
-11:21:48.457 [UI] WM_SIZE #12 END duration=0s
-11:21:48.462 [UI] layout() #3 END duration=71ms
-11:21:48.462 [UI] WM_PAINT #1 main START
-11:21:48.462 [UI] WM_PAINT #1 main END duration=0s
-11:21:48.484 [UI] WM_PAINT #2 palette START
-11:21:48.485 [UI] WM_PAINT #2 palette END duration=1ms
-11:21:48.485 [UI] WM_PAINT #3 palette START
-11:21:48.486 [UI] WM_PAINT #3 palette END duration=0s
-11:21:48.486 [UI] WM_PAINT #4 palette START
-11:21:48.486 [UI] WM_PAINT #4 palette END duration=0s
-11:21:48.486 [UI] WM_PAINT #5 canvas START
-11:21:48.486 [UI] canvasPaint() START
-11:21:48.486 [UI] canvasPaint() END duration=0s
-11:21:48.486 [UI] WM_PAINT #5 canvas END duration=0s
-11:21:48.487 [BOOT] enter message loop
-11:21:48.487 [DISPATCH] START #1 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x031F(0x31f) w=0x1 l=0x0
-11:21:48.487 [DISPATCH] END #1 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x031F(0x31f) w=0x1 l=0x0
-11:21:48.487 [DISPATCH] START #2 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0xC153(0xc153) w=0x0 l=0x0
-11:21:48.487 [DISPATCH] END #2 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0xC153(0xc153) w=0x0 l=0x0
-11:21:48.487 [DISPATCH] START #3 hwnd=0x820856 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.487 [DISPATCH] END #3 hwnd=0x820856 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.487 [DISPATCH] START #4 hwnd=0x560C8E class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.487 [DISPATCH] END #4 hwnd=0x560C8E class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.487 [DISPATCH] START #5 hwnd=0x200618 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.487 [DISPATCH] END #5 hwnd=0x200618 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.487 [DISPATCH] START #6 hwnd=0x360206 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.487 [DISPATCH] END #6 hwnd=0x360206 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.487 [DISPATCH] START #7 hwnd=0x3E0C9E class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.487 [DISPATCH] END #7 hwnd=0x3E0C9E class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.487 [DISPATCH] START #8 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x8003(0x8003) w=0x0 l=0x0
-11:21:48.487 [TREE] rebuild completed in 1ms nodes=0
-11:21:48.487 [TREE] deferred refresh filter=__all__ maps=0 mapNodes=0
-11:21:48.487 [DISPATCH] END #8 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x8003(0x8003) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #9 hwnd=0xB50A24 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #9 hwnd=0xB50A24 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #10 hwnd=0x1C0998 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #10 hwnd=0x1C0998 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #11 hwnd=0x270650 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #11 hwnd=0x270650 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #12 hwnd=0x3109D2 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #12 hwnd=0x3109D2 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #13 hwnd=0x610DF2 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #13 hwnd=0x610DF2 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #14 hwnd=0x75080A class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #14 hwnd=0x75080A class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #15 hwnd=0x5F0558 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #15 hwnd=0x5F0558 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #16 hwnd=0x870F82 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #16 hwnd=0x870F82 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #17 hwnd=0x6F0DCA class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #17 hwnd=0x6F0DCA class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #18 hwnd=0x3407B2 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #18 hwnd=0x3407B2 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #19 hwnd=0xCF0BEA class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #19 hwnd=0xCF0BEA class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #20 hwnd=0xA30892 class=ListBox id=6101 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #20 hwnd=0xA30892 class=ListBox id=6101 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #21 hwnd=0x5F0906 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #21 hwnd=0x5F0906 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #22 hwnd=0x220D30 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #22 hwnd=0x220D30 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #23 hwnd=0x3B0746 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #23 hwnd=0x3B0746 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #24 hwnd=0xC09D0 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #24 hwnd=0xC09D0 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #25 hwnd=0x1C0954 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #25 hwnd=0x1C0954 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #26 hwnd=0x1F0902 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #26 hwnd=0x1F0902 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] START #27 hwnd=0x8602D6 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.488 [DISPATCH] END #27 hwnd=0x8602D6 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
-11:21:48.490 [DISPATCH] START #29 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x6 l=0x0
-11:21:48.490 [DISPATCH] END #29 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x6 l=0x0
-11:21:48.491 [DISPATCH] START #31 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x6 l=0x0
-11:21:48.491 [DISPATCH] END #31 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x6 l=0x0
-11:21:48.491 [DISPATCH] START #32 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
-11:21:48.491 [DISPATCH] END #32 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
-11:21:48.492 [DISPATCH] START #34 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
-11:21:48.492 [DISPATCH] END #34 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
-11:21:48.492 [DISPATCH] START #36 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x6 l=0x0
-11:21:48.492 [DISPATCH] END #36 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x6 l=0x0
-11:21:48.494 [DISPATCH] START #39 hwnd=0 msg=0x0113(0x113) w=0x2501 l=0x7ff899734990
-11:21:48.494 [DISPATCH] END #39 hwnd=0 msg=0x0113(0x113) w=0x2501 l=0x7ff899734990
-11:21:48.494 [DISPATCH] START #40 hwnd=0x2B0DB8 class=MSCTFIME UI id=0 msg=0x0113(0x113) w=0x1 l=0x0
-11:21:48.494 [DISPATCH] END #40 hwnd=0x2B0DB8 class=MSCTFIME UI id=0 msg=0x0113(0x113) w=0x1 l=0x0
-11:21:48.495 [DISPATCH] START #42 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x02A3(0x2a3) w=0x0 l=0x0
-11:21:48.495 [DISPATCH] END #42 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x02A3(0x2a3) w=0x0 l=0x0
-11:21:48.502 [DISPATCH] START #46 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
-11:21:48.503 [DISPATCH] END #46 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
-11:21:48.554 [COUNTERS] 1s paint=5 size=12 layout=3 invalidate=4
-11:21:48.554 [WATCHDOG] UI heartbeat request #1
-11:21:48.554 [DISPATCH] START #63 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=WM_APP_DIAG_HEARTBEAT(0x80f0) w=0x1 l=0x0
-11:21:48.554 [WATCHDOG] UI heartbeat ACK #1
-11:21:48.554 [DISPATCH] END #63 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=WM_APP_DIAG_HEARTBEAT(0x80f0) w=0x1 l=0x0
-11:21:48.558 [DISPATCH] START #65 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.558 [DISPATCH] END #65 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.620 [DISPATCH] START #90 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.620 [DISPATCH] END #90 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.659 [DISPATCH] START #107 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:48.659 [DISPATCH] END #107 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:48.674 [DISPATCH] START #114 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.674 [DISPATCH] END #114 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.720 [DISPATCH] START #121 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:48.720 [DISPATCH] END #121 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:48.735 [DISPATCH] START #122 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.735 [DISPATCH] END #122 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.764 [DISPATCH] START #127 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x8004(0x8004) w=0x0 l=0x0
-11:21:48.764 [DISPATCH] END #127 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x8004(0x8004) w=0x0 l=0x0
-11:21:48.781 [DISPATCH] START #131 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:48.781 [DISPATCH] END #131 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:48.791 [DISPATCH] START #133 hwnd=0x830734 class=Button id=1003 msg=0x02A3(0x2a3) w=0x0 l=0x0
-11:21:48.791 [DISPATCH] END #133 hwnd=0x830734 class=Button id=1003 msg=0x02A3(0x2a3) w=0x0 l=0x0
-11:21:48.796 [DISPATCH] START #135 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.796 [DISPATCH] END #135 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.827 [DISPATCH] START #145 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9a00c9
-11:21:48.827 [DISPATCH] END #145 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9a00c9
-11:21:48.833 [DISPATCH] START #146 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9a00c9
-11:21:48.833 [DISPATCH] END #146 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9a00c9
-11:21:48.835 [DISPATCH] START #147 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9900c9
-11:21:48.835 [DISPATCH] END #147 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9900c9
-11:21:48.839 [DISPATCH] START #148 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9900c9
-11:21:48.839 [DISPATCH] END #148 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9900c9
-11:21:48.841 [DISPATCH] START #149 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9800c9
-11:21:48.841 [DISPATCH] END #149 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9800c9
-11:21:48.843 [DISPATCH] START #150 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:48.843 [DISPATCH] END #150 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:48.847 [DISPATCH] START #151 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9700c9
-11:21:48.847 [DISPATCH] END #151 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9700c9
-11:21:48.849 [DISPATCH] START #152 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9600c8
-11:21:48.849 [DISPATCH] END #152 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9600c8
-11:21:48.851 [DISPATCH] START #153 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9600c8
-11:21:48.851 [DISPATCH] END #153 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9600c8
-11:21:48.858 [DISPATCH] START #154 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.858 [DISPATCH] END #154 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.860 [DISPATCH] START #155 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9600c8
-11:21:48.860 [DISPATCH] END #155 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9600c8
-11:21:48.861 [DISPATCH] START #156 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9500c8
-11:21:48.861 [DISPATCH] END #156 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9500c8
-11:21:48.867 [DISPATCH] START #157 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9500c8
-11:21:48.867 [DISPATCH] END #157 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9500c8
-11:21:48.871 [DISPATCH] START #158 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9400c8
-11:21:48.871 [DISPATCH] END #158 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9400c8
-11:21:48.873 [DISPATCH] START #159 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9300c8
-11:21:48.873 [DISPATCH] END #159 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9300c8
-11:21:48.879 [DISPATCH] START #160 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9200c8
-11:21:48.879 [DISPATCH] END #160 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9200c8
-11:21:48.886 [DISPATCH] START #161 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9100c8
-11:21:48.886 [DISPATCH] END #161 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9100c8
-11:21:48.889 [DISPATCH] START #162 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9000c8
-11:21:48.889 [DISPATCH] END #162 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x9000c8
-11:21:48.905 [DISPATCH] START #163 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:48.905 [DISPATCH] END #163 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:48.915 [DISPATCH] START #164 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8f00c8
-11:21:48.915 [DISPATCH] END #164 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8f00c8
-11:21:48.917 [DISPATCH] START #165 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8e00c8
-11:21:48.917 [DISPATCH] END #165 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8e00c8
-11:21:48.920 [DISPATCH] START #166 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.920 [DISPATCH] END #166 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.929 [DISPATCH] START #167 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8d00c8
-11:21:48.929 [DISPATCH] END #167 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8d00c8
-11:21:48.967 [DISPATCH] START #168 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:48.967 [DISPATCH] END #168 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:48.983 [DISPATCH] START #169 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:48.983 [DISPATCH] END #169 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:49.030 [DISPATCH] START #170 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8c00c8
-11:21:49.030 [DISPATCH] END #170 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8c00c8
-11:21:49.030 [DISPATCH] START #171 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:49.030 [DISPATCH] END #171 hwnd=0x830734 class=Button id=1003 msg=0x0113(0x113) w=0x177f365bc70 l=0x7ff8966835c0
-11:21:49.031 [DISPATCH] START #172 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8b00c9
-11:21:49.031 [DISPATCH] END #172 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8b00c9
-11:21:49.046 [DISPATCH] START #173 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:49.046 [DISPATCH] END #173 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:49.110 [DISPATCH] START #174 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:49.110 [DISPATCH] END #174 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:49.172 [DISPATCH] START #175 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:49.172 [DISPATCH] END #175 hwnd=0x2C0992 class=ComboBox id=1105 msg=0x0113(0x113) w=0x177f3658520 l=0x7ff8966835c0
-11:21:49.405 [DISPATCH] START #176 hwnd=0 msg=0x0113(0x113) w=0x24ff l=0x7ff89667c4b0
-11:21:49.405 [DISPATCH] END #176 hwnd=0 msg=0x0113(0x113) w=0x24ff l=0x7ff89667c4b0
-11:21:49.457 [DISPATCH] START #177 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A1(0xa1) w=0x5 l=0x8b00c9
-11:21:49.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:21:49.554 [WATCHDOG] UI heartbeat request #2
-11:21:49.554 [WATCHDOG] UI heartbeat ACK #2
-11:21:50.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:21:50.554 [WATCHDOG] UI heartbeat request #3
-11:21:50.554 [WATCHDOG] UI heartbeat ACK #3
-11:21:51.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:21:51.554 [WATCHDOG] UI heartbeat request #4
-11:21:51.554 [WATCHDOG] UI heartbeat ACK #4
-11:21:52.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:21:52.554 [WATCHDOG] UI heartbeat request #5
-11:21:52.554 [WATCHDOG] UI heartbeat ACK #5
-11:21:53.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:21:53.554 [WATCHDOG] UI heartbeat request #6
-11:21:53.554 [WATCHDOG] UI heartbeat ACK #6
-11:21:54.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:21:54.554 [WATCHDOG] UI heartbeat request #7
-11:21:54.554 [WATCHDOG] UI heartbeat ACK #7
-11:21:55.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:21:55.554 [WATCHDOG] UI heartbeat request #8
-11:21:55.554 [WATCHDOG] UI heartbeat ACK #8
-11:21:56.472 [DISPATCH] END #177 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A1(0xa1) w=0x5 l=0x8b00c9
-11:21:56.472 [DISPATCH] START #178 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=WM_COMMAND(0x111) w=0x756e l=0x0
-11:21:56.472 [UI] WM_COMMAND #11 id=30062 notify=0
-11:21:56.472 [DISPATCH] END #178 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=WM_COMMAND(0x111) w=0x756e l=0x0
-11:21:56.490 [DISPATCH] START #180 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x8004(0x8004) w=0x0 l=0x0
-11:21:56.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:21:56.554 [WATCHDOG] UI heartbeat request #9
-11:21:56.554 [WATCHDOG] UI heartbeat ACK #9
-11:21:57.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:21:57.554 [WATCHDOG] UI heartbeat request #10
-11:21:57.554 [WATCHDOG] UI heartbeat ACK #10
-11:21:58.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:21:58.554 [WATCHDOG] UI heartbeat request #11
-11:21:58.554 [WATCHDOG] UI heartbeat ACK #11
-11:21:59.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:21:59.554 [WATCHDOG] UI heartbeat request #12
-11:21:59.554 [WATCHDOG] UI heartbeat ACK #12
-11:22:00.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:00.554 [WATCHDOG] UI heartbeat request #13
-11:22:00.554 [WATCHDOG] UI heartbeat ACK #13
-11:22:01.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:01.554 [WATCHDOG] UI heartbeat request #14
-11:22:01.554 [WATCHDOG] UI heartbeat ACK #14
-11:22:02.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:02.554 [WATCHDOG] UI heartbeat request #15
-11:22:02.554 [WATCHDOG] UI heartbeat ACK #15
-11:22:03.553 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:03.554 [WATCHDOG] UI heartbeat request #16
-11:22:03.554 [WATCHDOG] UI heartbeat ACK #16
-11:22:04.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:04.554 [WATCHDOG] UI heartbeat request #17
-11:22:04.554 [WATCHDOG] UI heartbeat ACK #17
-11:22:05.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:05.554 [WATCHDOG] UI heartbeat request #18
-11:22:05.554 [WATCHDOG] UI heartbeat ACK #18
-11:22:06.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:06.554 [WATCHDOG] UI heartbeat request #19
-11:22:06.554 [WATCHDOG] UI heartbeat ACK #19
-11:22:07.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:07.554 [WATCHDOG] UI heartbeat request #20
-11:22:07.554 [WATCHDOG] UI heartbeat ACK #20
-11:22:08.553 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:08.553 [WATCHDOG] UI heartbeat request #21
-11:22:08.553 [WATCHDOG] UI heartbeat ACK #21
-11:22:09.553 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:09.553 [WATCHDOG] UI heartbeat request #22
-11:22:09.553 [WATCHDOG] UI heartbeat ACK #22
-11:22:10.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:10.554 [WATCHDOG] UI heartbeat request #23
-11:22:10.554 [WATCHDOG] UI heartbeat ACK #23
-11:22:11.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:11.554 [WATCHDOG] UI heartbeat request #24
-11:22:11.554 [WATCHDOG] UI heartbeat ACK #24
-11:22:12.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:12.554 [WATCHDOG] UI heartbeat request #25
-11:22:12.554 [WATCHDOG] UI heartbeat ACK #25
-11:22:13.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:13.554 [WATCHDOG] UI heartbeat request #26
-11:22:13.554 [WATCHDOG] UI heartbeat ACK #26
-11:22:14.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:14.554 [WATCHDOG] UI heartbeat request #27
-11:22:14.554 [WATCHDOG] UI heartbeat ACK #27
-11:22:15.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:15.554 [WATCHDOG] UI heartbeat request #28
-11:22:15.554 [WATCHDOG] UI heartbeat ACK #28
-11:22:16.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:16.554 [WATCHDOG] UI heartbeat request #29
-11:22:16.554 [WATCHDOG] UI heartbeat ACK #29
-11:22:17.553 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:17.553 [WATCHDOG] UI heartbeat request #30
-11:22:17.553 [WATCHDOG] UI heartbeat ACK #30
-11:22:18.129 [DISPATCH] END #180 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x8004(0x8004) w=0x0 l=0x0
-11:22:18.130 [DISPATCH] START #182 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x6 l=0x0
-11:22:18.130 [DISPATCH] END #182 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x6 l=0x0
-11:22:18.131 [DISPATCH] START #183 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
-11:22:18.131 [DISPATCH] END #183 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
-11:22:18.146 [DISPATCH] START #187 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
-11:22:18.146 [DISPATCH] END #187 hwnd=0x160742 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
-11:22:18.231 [DISPATCH] START #230 hwnd=0 msg=0x0113(0x113) w=0x24c5 l=0x7ff899734990
-11:22:18.231 [DISPATCH] END #230 hwnd=0 msg=0x0113(0x113) w=0x24c5 l=0x7ff899734990
-11:22:18.339 [DISPATCH] START #287 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x02A3(0x2a3) w=0x0 l=0x0
-11:22:18.339 [DISPATCH] END #287 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x02A3(0x2a3) w=0x0 l=0x0
-11:22:18.355 [DISPATCH] START #298 hwnd=0x700BC4 class=Button id=1017 msg=0x02A3(0x2a3) w=0x0 l=0x0
-11:22:18.355 [DISPATCH] END #298 hwnd=0x700BC4 class=Button id=1017 msg=0x02A3(0x2a3) w=0x0 l=0x0
-11:22:18.399 [DISPATCH] START #322 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.399 [DISPATCH] END #322 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.413 [DISPATCH] START #329 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x990622
-11:22:18.413 [DISPATCH] END #329 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x990622
-11:22:18.415 [DISPATCH] START #330 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x980622
-11:22:18.415 [DISPATCH] END #330 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x980622
-11:22:18.415 [DISPATCH] START #331 hwnd=0x700BC4 class=Button id=1017 msg=0x0113(0x113) w=0x177f365d480 l=0x7ff8966835c0
-11:22:18.415 [DISPATCH] END #331 hwnd=0x700BC4 class=Button id=1017 msg=0x0113(0x113) w=0x177f365d480 l=0x7ff8966835c0
-11:22:18.415 [DISPATCH] START #332 hwnd=0 msg=0x0113(0x113) w=0x24c6 l=0x7ff89667c4b0
-11:22:18.415 [DISPATCH] END #332 hwnd=0 msg=0x0113(0x113) w=0x24c6 l=0x7ff89667c4b0
-11:22:18.417 [DISPATCH] START #333 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x970623
-11:22:18.417 [DISPATCH] END #333 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x970623
-11:22:18.419 [DISPATCH] START #334 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x960624
-11:22:18.419 [DISPATCH] END #334 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x960624
-11:22:18.421 [DISPATCH] START #335 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x950624
-11:22:18.421 [DISPATCH] END #335 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x950624
-11:22:18.423 [DISPATCH] START #336 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x930625
-11:22:18.423 [DISPATCH] END #336 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x930625
-11:22:18.424 [DISPATCH] START #337 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x930625
-11:22:18.424 [DISPATCH] END #337 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x930625
-11:22:18.427 [DISPATCH] START #338 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x920626
-11:22:18.427 [DISPATCH] END #338 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x920626
-11:22:18.429 [DISPATCH] START #339 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x900626
-11:22:18.429 [DISPATCH] END #339 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x900626
-11:22:18.431 [DISPATCH] START #340 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x900627
-11:22:18.431 [DISPATCH] END #340 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x900627
-11:22:18.431 [DISPATCH] START #341 hwnd=0x2B0DB8 class=MSCTFIME UI id=0 msg=0x0113(0x113) w=0x1 l=0x0
-11:22:18.431 [DISPATCH] END #341 hwnd=0x2B0DB8 class=MSCTFIME UI id=0 msg=0x0113(0x113) w=0x1 l=0x0
-11:22:18.433 [DISPATCH] START #342 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8e0628
-11:22:18.433 [DISPATCH] END #342 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8e0628
-11:22:18.435 [DISPATCH] START #343 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8e0628
-11:22:18.435 [DISPATCH] END #343 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8e0628
-11:22:18.437 [DISPATCH] START #344 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8d0628
-11:22:18.437 [DISPATCH] END #344 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8d0628
-11:22:18.439 [DISPATCH] START #345 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8c0628
-11:22:18.439 [DISPATCH] END #345 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8c0628
-11:22:18.441 [DISPATCH] START #346 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8b0628
-11:22:18.441 [DISPATCH] END #346 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8b0628
-11:22:18.443 [DISPATCH] START #347 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8b0628
-11:22:18.443 [DISPATCH] END #347 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8b0628
-11:22:18.445 [DISPATCH] START #348 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8a0628
-11:22:18.445 [DISPATCH] END #348 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x8a0628
-11:22:18.447 [DISPATCH] START #349 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x880628
-11:22:18.447 [DISPATCH] END #349 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x880628
-11:22:18.451 [DISPATCH] START #350 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x870628
-11:22:18.451 [DISPATCH] END #350 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x870628
-11:22:18.453 [DISPATCH] START #351 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x870628
-11:22:18.453 [DISPATCH] END #351 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x5 l=0x870628
-11:22:18.455 [DISPATCH] START #352 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x860628
-11:22:18.455 [DISPATCH] END #352 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x860628
-11:22:18.455 [DISPATCH] START #353 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.455 [DISPATCH] END #353 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.457 [DISPATCH] START #354 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x850628
-11:22:18.457 [DISPATCH] END #354 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x850628
-11:22:18.459 [DISPATCH] START #355 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x830628
-11:22:18.459 [DISPATCH] END #355 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x830628
-11:22:18.462 [DISPATCH] START #356 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x820629
-11:22:18.462 [DISPATCH] END #356 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x820629
-11:22:18.469 [DISPATCH] START #357 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x800629
-11:22:18.469 [DISPATCH] END #357 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x800629
-11:22:18.476 [DISPATCH] START #358 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7f0629
-11:22:18.476 [DISPATCH] END #358 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7f0629
-11:22:18.478 [DISPATCH] START #359 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7e0629
-11:22:18.478 [DISPATCH] END #359 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7e0629
-11:22:18.478 [DISPATCH] START #360 hwnd=0x700BC4 class=Button id=1017 msg=0x0113(0x113) w=0x177f365d480 l=0x7ff8966835c0
-11:22:18.478 [DISPATCH] END #360 hwnd=0x700BC4 class=Button id=1017 msg=0x0113(0x113) w=0x177f365d480 l=0x7ff8966835c0
-11:22:18.480 [DISPATCH] START #361 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7d0629
-11:22:18.480 [DISPATCH] END #361 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7d0629
-11:22:18.481 [DISPATCH] START #362 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7d062a
-11:22:18.481 [DISPATCH] END #362 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7d062a
-11:22:18.494 [DISPATCH] START #363 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7c062a
-11:22:18.494 [DISPATCH] END #363 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7c062a
-11:22:18.495 [DISPATCH] START #364 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7b062a
-11:22:18.495 [DISPATCH] END #364 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7b062a
-11:22:18.497 [DISPATCH] START #365 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7b062a
-11:22:18.497 [DISPATCH] END #365 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7b062a
-11:22:18.503 [DISPATCH] START #366 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7a062a
-11:22:18.503 [DISPATCH] END #366 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x7a062a
-11:22:18.505 [DISPATCH] START #367 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x79062a
-11:22:18.505 [DISPATCH] END #367 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x79062a
-11:22:18.507 [DISPATCH] START #368 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x78062a
-11:22:18.507 [DISPATCH] END #368 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x78062a
-11:22:18.511 [DISPATCH] START #369 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x77062a
-11:22:18.511 [DISPATCH] END #369 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x77062a
-11:22:18.515 [DISPATCH] START #370 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x76062a
-11:22:18.515 [DISPATCH] END #370 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x76062a
-11:22:18.518 [DISPATCH] START #371 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x75062a
-11:22:18.518 [DISPATCH] END #371 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x75062a
-11:22:18.519 [DISPATCH] START #372 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x75062a
-11:22:18.519 [DISPATCH] END #372 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x75062a
-11:22:18.521 [DISPATCH] START #373 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x74062a
-11:22:18.521 [DISPATCH] END #373 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x74062a
-11:22:18.523 [DISPATCH] START #374 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x73062a
-11:22:18.523 [DISPATCH] END #374 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x73062a
-11:22:18.523 [DISPATCH] START #375 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.523 [DISPATCH] END #375 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.528 [DISPATCH] START #376 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x73062a
-11:22:18.528 [DISPATCH] END #376 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x73062a
-11:22:18.529 [DISPATCH] START #377 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x72062a
-11:22:18.529 [DISPATCH] END #377 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x72062a
-11:22:18.531 [DISPATCH] START #378 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x72062a
-11:22:18.531 [DISPATCH] END #378 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x72062a
-11:22:18.533 [DISPATCH] START #379 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x71062a
-11:22:18.533 [DISPATCH] END #379 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x71062a
-11:22:18.535 [DISPATCH] START #380 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x70062a
-11:22:18.535 [DISPATCH] END #380 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x70062a
-11:22:18.537 [DISPATCH] START #381 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6f062a
-11:22:18.537 [DISPATCH] END #381 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6f062a
-11:22:18.539 [DISPATCH] START #382 hwnd=0x700BC4 class=Button id=1017 msg=0x0113(0x113) w=0x177f365d480 l=0x7ff8966835c0
-11:22:18.539 [DISPATCH] END #382 hwnd=0x700BC4 class=Button id=1017 msg=0x0113(0x113) w=0x177f365d480 l=0x7ff8966835c0
-11:22:18.539 [DISPATCH] START #383 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6f062a
-11:22:18.539 [DISPATCH] END #383 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6f062a
-11:22:18.543 [DISPATCH] START #384 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6e062a
-11:22:18.543 [DISPATCH] END #384 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6e062a
-11:22:18.549 [DISPATCH] START #385 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6d062a
-11:22:18.549 [DISPATCH] END #385 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6d062a
-11:22:18.552 [DISPATCH] START #386 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6c062a
-11:22:18.552 [DISPATCH] END #386 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6c062a
-11:22:18.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:18.554 [WATCHDOG] UI heartbeat request #31
-11:22:18.554 [DISPATCH] START #387 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=WM_APP_DIAG_HEARTBEAT(0x80f0) w=0x1f l=0x0
-11:22:18.554 [WATCHDOG] UI heartbeat ACK #31
-11:22:18.554 [DISPATCH] END #387 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=WM_APP_DIAG_HEARTBEAT(0x80f0) w=0x1f l=0x0
-11:22:18.555 [DISPATCH] START #388 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6b062a
-11:22:18.555 [DISPATCH] END #388 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6b062a
-11:22:18.565 [DISPATCH] START #389 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6a062a
-11:22:18.565 [DISPATCH] END #389 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x6a062a
-11:22:18.576 [DISPATCH] START #390 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x69062a
-11:22:18.576 [DISPATCH] END #390 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x69062a
-11:22:18.577 [DISPATCH] START #391 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x69062a
-11:22:18.577 [DISPATCH] END #391 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A0(0xa0) w=0x14 l=0x69062a
-11:22:18.586 [DISPATCH] START #392 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.586 [DISPATCH] END #392 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.601 [DISPATCH] START #393 hwnd=0x700BC4 class=Button id=1017 msg=0x0113(0x113) w=0x177f365d480 l=0x7ff8966835c0
-11:22:18.601 [DISPATCH] END #393 hwnd=0x700BC4 class=Button id=1017 msg=0x0113(0x113) w=0x177f365d480 l=0x7ff8966835c0
-11:22:18.648 [DISPATCH] START #394 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.648 [DISPATCH] END #394 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.710 [DISPATCH] START #395 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.710 [DISPATCH] END #395 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.772 [DISPATCH] START #396 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.772 [DISPATCH] END #396 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.834 [DISPATCH] START #397 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.834 [DISPATCH] END #397 hwnd=0xD09B6 class=ComboBox id=1540 msg=0x0113(0x113) w=0x177f365d770 l=0x7ff8966835c0
-11:22:18.855 [DISPATCH] START #398 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A1(0xa1) w=0x14 l=0x69062a
-11:22:19.554 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
-11:22:19.554 [WATCHDOG] UI heartbeat request #32
-11:22:19.554 [WATCHDOG] UI heartbeat ACK #32
-11:22:20.137 [DISPATCH] END #398 hwnd=0x4608D8 class=PLMStudioWindowClass03 id=565600 msg=0x00A1(0xa1) w=0x14 l=0x69062a
-11:22:20.137 [BOOT] GetMessageW returned 0 (WM_QUIT)
-11:22:20.137 [BOOT] exit message loop
-11:22:20.138 [BOOT] diagnostics shutdown
+19:30:56.306 [BOOT] startup
+19:30:56.365 [BOOT] main() START
+19:30:56.431 [UI] WM_SIZE #1 START
+19:30:56.431 [UI] layout() #1 START
+19:30:56.432 [UI] layout() #1 END duration=0s
+19:30:56.432 [UI] WM_SIZE #1 END duration=0s
+19:30:56.447 [UI] WM_SIZE #2 START
+19:30:56.447 [UI] layout() #2 START
+19:30:56.447 [UI] layout() #2 END duration=0s
+19:30:56.447 [UI] WM_SIZE #2 END duration=0s
+19:30:56.643 [UI] WM_SIZE #3 START
+19:30:56.643 [UI] WM_SIZE #3 END duration=0s
+19:30:56.647 [UI] WM_SIZE #4 START
+19:30:56.647 [UI] WM_SIZE #4 END duration=0s
+19:30:56.650 [UI] WM_SIZE #5 START
+19:30:56.650 [UI] WM_SIZE #5 END duration=0s
+19:30:56.652 [UI] WM_SIZE #6 START
+19:30:56.653 [UI] WM_SIZE #6 END duration=1ms
+19:30:56.656 [UI] WM_SIZE #7 START
+19:30:56.656 [UI] WM_SIZE #7 END duration=0s
+19:30:56.703 [UI] WM_COMMAND #1 id=1711 notify=1024
+19:30:56.703 [UI] WM_COMMAND #2 id=1711 notify=768
+19:30:56.720 [UI] WM_COMMAND #3 id=1721 notify=1024
+19:30:56.720 [UI] WM_COMMAND #4 id=1721 notify=768
+19:30:56.724 [UI] WM_COMMAND #5 id=1712 notify=1024
+19:30:56.724 [UI] WM_COMMAND #6 id=1712 notify=768
+19:30:56.727 [UI] WM_COMMAND #7 id=1713 notify=1024
+19:30:56.727 [UI] WM_COMMAND #8 id=1713 notify=768
+19:30:56.896 [UI] WM_COMMAND #9 id=2302 notify=1024
+19:30:56.896 [UI] WM_COMMAND #10 id=2302 notify=768
+19:30:57.140 [UI] layout() #3 START
+19:30:57.163 [UI] WM_SIZE #8 START
+19:30:57.164 [UI] WM_SIZE #8 END duration=0s
+19:30:57.211 [UI] WM_SIZE #9 START
+19:30:57.211 [UI] WM_SIZE #9 END duration=0s
+19:30:57.213 [UI] WM_SIZE #10 START
+19:30:57.213 [UI] WM_SIZE #10 END duration=0s
+19:30:57.214 [UI] WM_SIZE #11 START
+19:30:57.214 [UI] WM_SIZE #11 END duration=0s
+19:30:57.215 [UI] WM_SIZE #12 START
+19:30:57.215 [UI] WM_SIZE #12 END duration=0s
+19:30:57.219 [UI] layout() #3 END duration=79ms
+19:30:57.220 [UI] WM_PAINT #1 main START
+19:30:57.220 [UI] WM_PAINT #1 main END duration=0s
+19:30:57.262 [UI] WM_PAINT #2 palette START
+19:30:57.262 [UI] WM_PAINT #2 palette END duration=0s
+19:30:57.263 [UI] WM_PAINT #3 palette START
+19:30:57.263 [UI] WM_PAINT #3 palette END duration=0s
+19:30:57.263 [UI] WM_PAINT #4 palette START
+19:30:57.264 [UI] WM_PAINT #4 palette END duration=0s
+19:30:57.264 [UI] WM_PAINT #5 canvas START
+19:30:57.264 [UI] canvasPaint() START
+19:30:57.264 [UI] canvasPaint() END duration=0s
+19:30:57.264 [UI] WM_PAINT #5 canvas END duration=0s
+19:30:57.264 [BOOT] enter message loop
+19:30:57.264 [DISPATCH] START #1 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x031F(0x31f) w=0x1 l=0x0
+19:30:57.264 [DISPATCH] END #1 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x031F(0x31f) w=0x1 l=0x0
+19:30:57.264 [DISPATCH] START #2 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0xC153(0xc153) w=0x0 l=0x0
+19:30:57.264 [DISPATCH] END #2 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0xC153(0xc153) w=0x0 l=0x0
+19:30:57.264 [DISPATCH] START #3 hwnd=0x450C78 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.264 [DISPATCH] END #3 hwnd=0x450C78 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.264 [DISPATCH] START #4 hwnd=0x1C1222 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.264 [DISPATCH] END #4 hwnd=0x1C1222 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.264 [DISPATCH] START #5 hwnd=0x280F6A class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.264 [DISPATCH] END #5 hwnd=0x280F6A class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.264 [DISPATCH] START #6 hwnd=0x740DE4 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.264 [DISPATCH] END #6 hwnd=0x740DE4 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.264 [DISPATCH] START #7 hwnd=0x530A78 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.264 [DISPATCH] END #7 hwnd=0x530A78 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.264 [DISPATCH] START #8 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x8003(0x8003) w=0x0 l=0x0
+19:30:57.265 [TREE] rebuild completed in 1ms nodes=0
+19:30:57.265 [TREE] deferred refresh filter=__all__ maps=0 mapNodes=0
+19:30:57.265 [DISPATCH] END #8 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x8003(0x8003) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] START #9 hwnd=0x800930 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] END #9 hwnd=0x800930 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] START #10 hwnd=0x1370D68 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] END #10 hwnd=0x1370D68 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] START #11 hwnd=0x1710DA class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] END #11 hwnd=0x1710DA class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] START #12 hwnd=0x1D11FC class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] END #12 hwnd=0x1D11FC class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] START #13 hwnd=0x16B0D92 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] END #13 hwnd=0x16B0D92 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] START #14 hwnd=0xAF105C class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] END #14 hwnd=0xAF105C class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] START #15 hwnd=0x320A6E class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] END #15 hwnd=0x320A6E class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] START #16 hwnd=0xBA0E18 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] END #16 hwnd=0xBA0E18 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] START #17 hwnd=0x250F60 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] END #17 hwnd=0x250F60 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] START #18 hwnd=0x1A11BE class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.265 [DISPATCH] END #18 hwnd=0x1A11BE class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] START #19 hwnd=0xAB0D9C class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] END #19 hwnd=0xAB0D9C class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] START #20 hwnd=0x65110C class=ListBox id=6101 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] END #20 hwnd=0x65110C class=ListBox id=6101 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] START #21 hwnd=0x1B09E4 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] END #21 hwnd=0x1B09E4 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] START #22 hwnd=0x460FE8 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] END #22 hwnd=0x460FE8 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] START #23 hwnd=0x8B0E9C class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] END #23 hwnd=0x8B0E9C class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] START #24 hwnd=0x980EC0 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] END #24 hwnd=0x980EC0 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] START #25 hwnd=0x230A00 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] END #25 hwnd=0x230A00 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] START #26 hwnd=0x100FBC class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] END #26 hwnd=0x100FBC class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] START #27 hwnd=0x390738 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.266 [DISPATCH] END #27 hwnd=0x390738 class=ComboLBox id=1000 msg=WM_SIZE(0x5) w=0x0 l=0x0
+19:30:57.267 [DISPATCH] START #28 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x2 l=0xbb0663
+19:30:57.267 [DISPATCH] END #28 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x2 l=0xbb0663
+19:30:57.267 [DISPATCH] START #29 hwnd=0xE508C6 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x6 l=0x0
+19:30:57.267 [DISPATCH] END #29 hwnd=0xE508C6 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x6 l=0x0
+19:30:57.268 [DISPATCH] START #31 hwnd=0xE508C6 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
+19:30:57.268 [DISPATCH] END #31 hwnd=0xE508C6 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
+19:30:57.268 [DISPATCH] START #32 hwnd=0 msg=0x0113(0x113) w=0x2eb0 l=0x7ff899734990
+19:30:57.268 [DISPATCH] END #32 hwnd=0 msg=0x0113(0x113) w=0x2eb0 l=0x7ff899734990
+19:30:57.268 [DISPATCH] START #33 hwnd=0x5106F8 class=MSCTFIME UI id=0 msg=0x0113(0x113) w=0x1 l=0x0
+19:30:57.268 [DISPATCH] END #33 hwnd=0x5106F8 class=MSCTFIME UI id=0 msg=0x0113(0x113) w=0x1 l=0x0
+19:30:57.268 [DISPATCH] START #34 hwnd=0xE508C6 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
+19:30:57.268 [DISPATCH] END #34 hwnd=0xE508C6 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
+19:30:57.269 [DISPATCH] START #35 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x5 l=0xbb0663
+19:30:57.269 [DISPATCH] END #35 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x5 l=0xbb0663
+19:30:57.271 [DISPATCH] START #36 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x5 l=0xbc0664
+19:30:57.271 [DISPATCH] END #36 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x5 l=0xbc0664
+19:30:57.274 [DISPATCH] START #37 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x5 l=0xbc0665
+19:30:57.274 [DISPATCH] END #37 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x5 l=0xbc0665
+19:30:57.276 [DISPATCH] START #38 hwnd=0xE508C6 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
+19:30:57.276 [DISPATCH] END #38 hwnd=0xE508C6 class=UserAdapterWindowClass id=0 msg=0x0060(0x60) w=0x1 l=0x0
+19:30:57.366 [COUNTERS] 1s paint=5 size=12 layout=3 invalidate=4
+19:30:57.366 [WATCHDOG] UI heartbeat request #1
+19:30:57.366 [DISPATCH] START #39 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=WM_APP_DIAG_HEARTBEAT(0x80f0) w=0x1 l=0x0
+19:30:57.366 [WATCHDOG] UI heartbeat ACK #1
+19:30:57.366 [DISPATCH] END #39 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=WM_APP_DIAG_HEARTBEAT(0x80f0) w=0x1 l=0x0
+19:30:57.470 [DISPATCH] START #40 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x5 l=0xbb0665
+19:30:57.470 [DISPATCH] END #40 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x5 l=0xbb0665
+19:30:57.512 [DISPATCH] START #41 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x5 l=0xbb0665
+19:30:57.512 [DISPATCH] END #41 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x5 l=0xbb0665
+19:30:57.513 [DISPATCH] START #42 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xba0665
+19:30:57.513 [DISPATCH] END #42 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xba0665
+19:30:57.534 [DISPATCH] START #43 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb90665
+19:30:57.534 [DISPATCH] END #43 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb90665
+19:30:57.555 [DISPATCH] START #44 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb80665
+19:30:57.556 [DISPATCH] END #44 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb80665
+19:30:57.557 [DISPATCH] START #45 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb80665
+19:30:57.557 [DISPATCH] END #45 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb80665
+19:30:57.563 [DISPATCH] START #46 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb60665
+19:30:57.563 [DISPATCH] END #46 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb60665
+19:30:57.569 [DISPATCH] START #47 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb60665
+19:30:57.570 [DISPATCH] END #47 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb60665
+19:30:57.571 [DISPATCH] START #48 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb50665
+19:30:57.571 [DISPATCH] END #48 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb50665
+19:30:57.575 [DISPATCH] START #49 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb50665
+19:30:57.576 [DISPATCH] END #49 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb50665
+19:30:57.576 [DISPATCH] START #50 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x8004(0x8004) w=0x0 l=0x0
+19:30:57.576 [DISPATCH] END #50 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x8004(0x8004) w=0x0 l=0x0
+19:30:57.577 [DISPATCH] START #51 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb40665
+19:30:57.577 [DISPATCH] END #51 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb40665
+19:30:57.585 [DISPATCH] START #52 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb30665
+19:30:57.585 [DISPATCH] END #52 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb30665
+19:30:57.591 [DISPATCH] START #53 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb20665
+19:30:57.591 [DISPATCH] END #53 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb20665
+19:30:57.595 [DISPATCH] START #54 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb10664
+19:30:57.595 [DISPATCH] END #54 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb10664
+19:30:57.599 [DISPATCH] START #55 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb10663
+19:30:57.599 [DISPATCH] END #55 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb10663
+19:30:57.602 [DISPATCH] START #56 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb00663
+19:30:57.602 [DISPATCH] END #56 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xb00663
+19:30:57.627 [DISPATCH] START #57 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xaf0663
+19:30:57.628 [DISPATCH] END #57 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xaf0663
+19:30:57.650 [DISPATCH] START #58 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xaf0663
+19:30:57.650 [DISPATCH] END #58 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xaf0663
+19:30:57.651 [DISPATCH] START #59 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xae0662
+19:30:57.651 [DISPATCH] END #59 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xae0662
+19:30:57.653 [DISPATCH] START #60 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xae0662
+19:30:57.653 [DISPATCH] END #60 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A0(0xa0) w=0x14 l=0xae0662
+19:30:57.748 [DISPATCH] START #61 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A1(0xa1) w=0x14 l=0xae0662
+19:30:58.375 [COUNTERS] 1s paint=0 size=0 layout=0 invalidate=0
+19:30:58.375 [WATCHDOG] UI heartbeat request #2
+19:30:58.375 [WATCHDOG] UI heartbeat ACK #2
+19:30:58.901 [DISPATCH] END #61 hwnd=0xE906A0 class=PLMStudioWindowClass03 id=457536 msg=0x00A1(0xa1) w=0x14 l=0xae0662
+19:30:58.901 [BOOT] GetMessageW returned 0 (WM_QUIT)
+19:30:58.901 [BOOT] exit message loop
+19:30:58.904 [BOOT] diagnostics shutdown
