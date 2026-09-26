@@ -159,7 +159,6 @@ func normalizeRuntimeCanonicalPBSPaths(data []byte) []byte {
 	return data
 }
 
-
 func patchRuntimeBattleAnimationCatalog(data []byte) ([]byte, error) {
 	replacements := [][2][]byte{
 		{
