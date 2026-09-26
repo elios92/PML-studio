@@ -160,18 +160,53 @@ func normalizeRuntimeCanonicalPBSPaths(data []byte) []byte {
 }
 
 func patchRuntimeFieldMoveConfirmDisplay(data []byte) ([]byte, error) {
-	old := []byte(`def _confirm_inline(scene, title: str, text: str) -> bool:
+	replacements := [][2][]byte{
+		{
+			[]byte(`from game.data_registry import registry, split_csv`),
+			[]byte(`from game.data_registry import registry, split_csv
+from game.message_system import intl`),
+		},
+		{
+			[]byte(`def _show(scene, title: str, text: str) -> None:
+    from game.debug_menu import show_message
+    show_message(scene.graphics, title, text)`),
+			[]byte(`def _show(scene, title: str, text: str) -> None:
+    # I messaggi delle MN appartengono al gioco, non al menu Debug.
+    # Mantieni sempre la mappa visibile come in Pokémon Essentials.
+    scene._show_dialogue(text)`),
+		},
+		{
+			[]byte(`def _confirm_inline(scene, title: str, text: str) -> bool:
     # show_message chiude con un tasto; subito dopo proponiamo la scelta sì/no.
     _show(scene, title, text)
-    return scene._show_choices(["Sì", "No"]) == 0`)
-	newer := []byte(`def _confirm_inline(scene, title: str, text: str) -> bool:
-    # Mantiene il box dialogo Essentials visibile mentre compare la scelta.
+    return scene._show_choices(["Sì", "No"]) == 0`),
+			[]byte(`def _confirm_inline(scene, title: str, text: str) -> bool:
+    # Il box dialogo resta sul frame di gioco mentre compare Yes/No.
     scene._show_dialogue(text)
-    return scene._show_choices(["Sì", "No"]) == 0`)
-	if !bytes.Contains(data, old) {
-		return nil, fmt.Errorf("runtime field moves: blocco conferma non trovato")
+    return scene._show_choices([intl("Yes"), intl("No")]) == 0`),
+		},
+		{
+			[]byte(`def _announce(scene, pokemon: dict[str, Any] | None, move_id: str) -> None:
+    name = str((pokemon or {}).get("nickname") or scene.game_state.get("player_name", "Allenatore"))
+    _show(scene, "Mossa da campo", f"{name} usa {move_name(scene, move_id)}!")`),
+			[]byte(`def _announce(scene, pokemon: dict[str, Any] | None, move_id: str) -> None:
+    name = str((pokemon or {}).get("nickname") or scene.game_state.get("player_name", intl("Trainer")))
+    _show(scene, "", intl("{1} used {2}!", name, move_name(scene, move_id)))`),
+		},
+		{
+			[]byte(`    if not _confirm_inline(scene, "Surf", "L'acqua è di un blu intenso...\\nVuoi usare Surf?"):
+        return False`),
+			[]byte(`    if not _confirm_inline(scene, "Surf", intl("The water is a deep blue color... Would you like to use Surf on it?")):
+        return False`),
+		},
 	}
-	return bytes.Replace(data, old, newer, 1), nil
+	for _, pair := range replacements {
+		if !bytes.Contains(data, pair[0]) {
+			return nil, fmt.Errorf("runtime field moves: blocco Essentials atteso non trovato")
+		}
+		data = bytes.Replace(data, pair[0], pair[1], 1)
+	}
+	return data, nil
 }
 
 const runtimeEssentialsDebugUISection = `# -----------------------------------------------------------------------------
