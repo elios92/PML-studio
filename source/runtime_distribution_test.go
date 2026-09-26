@@ -311,6 +311,17 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         }
     }
 
+    for _, want := range []string{
+        "resolved_root = Path(root) if root is not None else Path.cwd()",
+        "while page < len(lines):",
+        "for line in lines[page:page+3]:",
+        "page += 3",
+    } {
+        if !strings.Contains(debugText, want) {
+            t.Fatalf("debug UI regression guard missing %q", want)
+        }
+    }
+
     mapSelectData, err := os.ReadFile(filepath.Join(root, "game", "map_select_scene.py"))
     if err != nil {
         t.Fatal(err)
