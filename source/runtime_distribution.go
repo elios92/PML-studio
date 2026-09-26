@@ -159,6 +159,259 @@ func normalizeRuntimeCanonicalPBSPaths(data []byte) []byte {
 	return data
 }
 
+
+func patchRuntimeBattleAnimationCatalog(data []byte) ([]byte, error) {
+	replacements := [][2][]byte{
+		{
+			[]byte(\`class BattleAnimationCatalog:
+    def __init__(self, root: Path):
+        self.root = Path(root)
+        self.roots = (
+            self.root / "assets" / "Animations",
+            self.root / "Animations",
+            self.root / "ARCHIVIO_PROGETTO" / "Originali" / "Animations",
+        )
+
+    def move_path(self, move_id: str) -> Path | None:
+        key = re.sub(r"[^A-Z0-9]", "", str(move_id).upper())
+        names = (
+            f"Move_{key}.anm",
+            f"Move_{key}/Move_{key}.anm",
+        )
+        for base in self.roots:
+            for rel in names:
+                candidate = base / rel
+                if candidate.is_file():
+                    return candidate
+        return None\`),
+			[]byte(\`class BattleAnimationCatalog:
+    def __init__(self, root: Path):
+        self.root = Path(root)
+        self.roots = (
+            self.root / "assets" / "Animations",
+            self.root / "Animations",
+            self.root / "ARCHIVIO_PROGETTO" / "Originali" / "Animations",
+        )
+        self.json_paths = (
+            self.root / "converted" / "data" / "PkmnAnimations.json",
+            self.root / "converted" / "PkmnAnimations.json",
+            self.root / "Data" / "PkmnAnimations.json",
+        )
+        self._json_source: Path | None = None
+        self._json_index: dict[str, dict[str, Any]] | None = None
+
+    @staticmethod
+    def _move_key(move_id: str) -> str:
+        return re.sub(r"[^A-Z0-9]", "", str(move_id).upper())
+
+    def _load_json_index(self) -> dict[str, dict[str, Any]]:
+        if self._json_index is not None:
+            return self._json_index
+        self._json_index = {}
+        for path in self.json_paths:
+            if not path.is_file():
+                continue
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8-sig"))
+            except (OSError, ValueError, TypeError, json.JSONDecodeError):
+                continue
+            raw = payload.get("array", []) if isinstance(payload, dict) else []
+            if not isinstance(raw, list):
+                continue
+            self._json_source = path
+            for item in raw:
+                if not isinstance(item, dict):
+                    continue
+                name = str(item.get("name", "") or "").strip()
+                if name:
+                    self._json_index[name.casefold()] = item
+            break
+        return self._json_index
+
+    def animation_json(self, move_id: str, *, opponent: bool = False):
+        key = self._move_key(move_id)
+        index = self._load_json_index()
+        preferred = (f"OppMove:{key}", f"Move:{key}") if opponent else (f"Move:{key}", f"OppMove:{key}")
+        for name in preferred:
+            item = index.get(name.casefold())
+            if item is None:
+                continue
+            return self._json_source, {
+                "name": str(item.get("name", "") or ""),
+                "graphic": str(item.get("graphic", "") or ""),
+                "frames": item.get("array") or [],
+                "timings": item.get("timing") or [],
+                "position": int(item.get("position") or 0),
+                "hue": int(item.get("hue") or 0),
+            }
+        return None, None
+
+    def move_path(self, move_id: str) -> Path | None:
+        key = self._move_key(move_id)
+        names = (
+            f"Move_{key}.anm",
+            f"Move_{key}/Move_{key}.anm",
+        )
+        for base in self.roots:
+            for rel in names:
+                candidate = base / rel
+                if candidate.is_file():
+                    return candidate
+        return None\`),
+		},
+		{
+			[]byte(\`    def _animation(self, move_id):
+        path = self.catalog.move_path(move_id)
+        if path is None:
+            return None, None
+        if path not in self.cache:
+            self.cache[path] = load_anm(path)
+        return path, self.cache[path]\`),
+			[]byte(\`    def _animation(self, move_id, *, opponent: bool = False):
+        source, anim = self.catalog.animation_json(move_id, opponent=opponent)
+        if anim is not None:
+            return source, anim
+        path = self.catalog.move_path(move_id)
+        if path is None:
+            return None, None
+        if path not in self.cache:
+            self.cache[path] = load_anm(path)
+        return path, self.cache[path]\`),
+		},
+		{
+			[]byte(\`    def _sheet_path(self, anm_path: Path, graphic: str):
+        if not graphic:
+            return None
+        names = (graphic, Path(graphic).name)
+        candidates = []
+        for name in names:
+            candidates.extend((
+                anm_path.parent / name,
+                self.root / "assets" / "Graphics" / "Animations" / name,
+                self.root / "Graphics" / "Animations" / name,
+                self.root / "ARCHIVIO_PROGETTO" / "Originali" / "Animations" / name,
+            ))
+        for p in candidates:
+            if p.is_file():
+                return p
+        return None\`),
+			[]byte(\`    def _sheet_path(self, source_path: Path | None, graphic: str):
+        if not graphic:
+            return None
+        base_names = (graphic, Path(graphic).name)
+        names = []
+        for name in base_names:
+            names.append(name)
+            if not Path(name).suffix:
+                names.extend(name + ext for ext in (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp"))
+        candidates = []
+        for name in names:
+            if source_path is not None:
+                candidates.append(source_path.parent / name)
+            candidates.extend((
+                self.root / "assets" / "Graphics" / "Animations" / name,
+                self.root / "Graphics" / "Animations" / name,
+                self.root / "ARCHIVIO_PROGETTO" / "Originali" / "Graphics" / "Animations" / name,
+                self.root / "ARCHIVIO_PROGETTO" / "Originali" / "Animations" / name,
+            ))
+        for p in candidates:
+            if p.is_file():
+                return p
+        return None\`),
+		},
+		{
+			[]byte(\`    def _sound(self, anm_path, name, volume=100, pitch=100):
+        if not name:
+            return
+        stem = Path(name).name
+        candidates = [
+            anm_path.parent / stem,
+            self.root / "assets" / "Audio" / "SE" / stem,
+            self.root / "Audio" / "SE" / stem,
+        ]
+        for p in candidates:\`),
+			[]byte(\`    def _sound(self, source_path, name, volume=100, pitch=100):
+        if not name:
+            return
+        stem = Path(name).name
+        names = [stem]
+        if not Path(stem).suffix:
+            names.extend(stem + ext for ext in (".wav", ".ogg", ".mp3"))
+        candidates = []
+        for item in names:
+            if source_path is not None:
+                candidates.append(source_path.parent / item)
+            candidates.extend((
+                self.root / "assets" / "Audio" / "SE" / item,
+                self.root / "Audio" / "SE" / item,
+                self.root / "ARCHIVIO_PROGETTO" / "Originali" / "Audio" / "SE" / item,
+            ))
+        for p in candidates:\`),
+		},
+		{
+			[]byte(\`    @staticmethod
+    def _timing_value(timing, key, default=None):
+        if isinstance(timing, dict):
+            return timing.get(key, default)
+        return default\`),
+			[]byte(\`    @staticmethod
+    def _timing_value(timing, key, default=None):
+        if isinstance(timing, dict):
+            if key in timing:
+                return timing.get(key, default)
+            return timing.get(str(key).lstrip("@"), default)
+        return default\`),
+		},
+		{
+			[]byte(\`    def play(self, move_id, user_sprite, target_sprite, *, redraw=None) -> bool:
+        anm_path, anim = self._animation(move_id)
+        if not anim or not anim.get("frames"):
+            return False
+
+        sheet_path = self._sheet_path(anm_path, anim.get("graphic", ""))\`),
+			[]byte(\`    def play(self, move_id, user_sprite, target_sprite, *, redraw=None, opponent: bool = False) -> bool:
+        source_path, anim = self._animation(move_id, opponent=opponent)
+        if not anim or not anim.get("frames"):
+            return False
+
+        sheet_path = self._sheet_path(source_path, anim.get("graphic", ""))\`),
+		},
+		{
+			[]byte(\`                        anm_path,
+                        _unwrap_string(self._timing_value(timing, "@name", "")),\`),
+			[]byte(\`                        source_path,
+                        _unwrap_string(self._timing_value(timing, "@name", "")),\`),
+		},
+	}
+	for _, pair := range replacements {
+		if !bytes.Contains(data, pair[0]) {
+			return nil, fmt.Errorf("runtime battle animations: blocco atteso non trovato")
+		}
+		data = bytes.Replace(data, pair[0], pair[1], 1)
+	}
+	return data, nil
+}
+
+func patchRuntimeBattleAnimationDirection(data []byte) ([]byte, error) {
+	old := []byte(\`                redraw=lambda: self._draw(
+                    self._alive(self.state.get("party", [])) or attacker,
+                    self._alive(self.enemy_party) or defender,
+                    getattr(self, "_last_message", ""),
+                ),
+            )\`)
+	newer := []byte(\`                redraw=lambda: self._draw(
+                    self._alive(self.state.get("party", [])) or attacker,
+                    self._alive(self.enemy_party) or defender,
+                    getattr(self, "_last_message", ""),
+                ),
+                opponent=attacker not in self.state.get("party", []),
+            )\`)
+	if !bytes.Contains(data, old) {
+		return nil, fmt.Errorf("runtime battle scene: chiamata animazione mossa non trovata")
+	}
+	return bytes.Replace(data, old, newer, 1), nil
+}
+
 func patchRuntimeFieldMoveConfirmDisplay(data []byte) ([]byte, error) {
 	replacements := [][2][]byte{
 		{
@@ -1861,6 +2114,18 @@ func installRuntimeCore(dest, projectName string) (releaseExe, debugExe string, 
 		}
 		if strings.EqualFold(filepath.ToSlash(archiveName), "game/field_moves.py") {
 			data, err = patchRuntimeFieldMoveConfirmDisplay(data)
+			if err != nil {
+				return "", "", err
+			}
+		}
+		if strings.EqualFold(filepath.ToSlash(archiveName), "game/battle_animation_player.py") {
+			data, err = patchRuntimeBattleAnimationCatalog(data)
+			if err != nil {
+				return "", "", err
+			}
+		}
+		if strings.EqualFold(filepath.ToSlash(archiveName), "game/battle_scene.py") {
+			data, err = patchRuntimeBattleAnimationDirection(data)
 			if err != nil {
 				return "", "", err
 			}
