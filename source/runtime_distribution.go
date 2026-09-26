@@ -1466,7 +1466,7 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return fmt.Errorf("runtime map_scene.py: fine movimento giocatore non trovata")
 	}
 	patched = bytes.Replace(patched, oldStopCharset, newStopCharset, 1)
-	oldPlayerDraw := []byte(\`        player_frame = (None if self.game_state.get("transparent_player", False)
+	oldPlayerDraw := []byte(`        player_frame = (None if self.game_state.get("transparent_player", False)
                         else self._character_frame(self.player_graphic))
         if player_frame:
             jump_offset = self._player_jump_pixel_offset()
@@ -1478,8 +1478,8 @@ func installRuntimeUICompatibilityPatch(dest string) error {
             player_position = (ox + int(self.player_visual_x * 32),
                                oy + int(self.player_visual_y * 32) - self._player_jump_pixel_offset())
         if not self.game_state.get("transparent_player", False):
-            sprites.append((int(self.player_visual_y * 1000), player_frame, player_position))\`)
-	newPlayerDraw := []byte(\`        player_render_graphic = self.player_graphic
+            sprites.append((int(self.player_visual_y * 1000), player_frame, player_position))`)
+	newPlayerDraw := []byte(`        player_render_graphic = self.player_graphic
         surf_base = None
         surf_bob = 0
         if self.game_state.get("surfing", False) or self.game_state.get("diving", False):
@@ -1505,7 +1505,7 @@ func installRuntimeUICompatibilityPatch(dest string) error {
                     oy + int((self.player_visual_y + 1) * 32) - surf_base.get_height() + 16 + surf_bob - jump_offset,
                 )
                 sprites.append((int(self.player_visual_y * 1000) - 1, surf_base, base_position))
-            sprites.append((int(self.player_visual_y * 1000), player_frame, player_position))\`)
+            sprites.append((int(self.player_visual_y * 1000), player_frame, player_position))`)
 	if !bytes.Contains(patched, oldPlayerDraw) {
 		return fmt.Errorf("runtime map_scene.py: rendering giocatore non trovato per base Surf/Dive")
 	}
