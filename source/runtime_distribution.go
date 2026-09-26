@@ -163,7 +163,7 @@ func normalizeRuntimeCanonicalPBSPaths(data []byte) []byte {
 func patchRuntimeBattleAnimationCatalog(data []byte) ([]byte, error) {
 	replacements := [][2][]byte{
 		{
-			[]byte(\`class BattleAnimationCatalog:
+			[]byte(`class BattleAnimationCatalog:
     def __init__(self, root: Path):
         self.root = Path(root)
         self.roots = (
@@ -183,8 +183,8 @@ func patchRuntimeBattleAnimationCatalog(data []byte) ([]byte, error) {
                 candidate = base / rel
                 if candidate.is_file():
                     return candidate
-        return None\`),
-			[]byte(\`class BattleAnimationCatalog:
+        return None`),
+			[]byte(`class BattleAnimationCatalog:
     def __init__(self, root: Path):
         self.root = Path(root)
         self.roots = (
@@ -257,17 +257,17 @@ func patchRuntimeBattleAnimationCatalog(data []byte) ([]byte, error) {
                 candidate = base / rel
                 if candidate.is_file():
                     return candidate
-        return None\`),
+        return None`),
 		},
 		{
-			[]byte(\`    def _animation(self, move_id):
+			[]byte(`    def _animation(self, move_id):
         path = self.catalog.move_path(move_id)
         if path is None:
             return None, None
         if path not in self.cache:
             self.cache[path] = load_anm(path)
-        return path, self.cache[path]\`),
-			[]byte(\`    def _animation(self, move_id, *, opponent: bool = False):
+        return path, self.cache[path]`),
+			[]byte(`    def _animation(self, move_id, *, opponent: bool = False):
         source, anim = self.catalog.animation_json(move_id, opponent=opponent)
         if anim is not None:
             return source, anim
@@ -276,10 +276,10 @@ func patchRuntimeBattleAnimationCatalog(data []byte) ([]byte, error) {
             return None, None
         if path not in self.cache:
             self.cache[path] = load_anm(path)
-        return path, self.cache[path]\`),
+        return path, self.cache[path]`),
 		},
 		{
-			[]byte(\`    def _sheet_path(self, anm_path: Path, graphic: str):
+			[]byte(`    def _sheet_path(self, anm_path: Path, graphic: str):
         if not graphic:
             return None
         names = (graphic, Path(graphic).name)
@@ -294,8 +294,8 @@ func patchRuntimeBattleAnimationCatalog(data []byte) ([]byte, error) {
         for p in candidates:
             if p.is_file():
                 return p
-        return None\`),
-			[]byte(\`    def _sheet_path(self, source_path: Path | None, graphic: str):
+        return None`),
+			[]byte(`    def _sheet_path(self, source_path: Path | None, graphic: str):
         if not graphic:
             return None
         base_names = (graphic, Path(graphic).name)
@@ -317,10 +317,10 @@ func patchRuntimeBattleAnimationCatalog(data []byte) ([]byte, error) {
         for p in candidates:
             if p.is_file():
                 return p
-        return None\`),
+        return None`),
 		},
 		{
-			[]byte(\`    def _sound(self, anm_path, name, volume=100, pitch=100):
+			[]byte(`    def _sound(self, anm_path, name, volume=100, pitch=100):
         if not name:
             return
         stem = Path(name).name
@@ -329,8 +329,8 @@ func patchRuntimeBattleAnimationCatalog(data []byte) ([]byte, error) {
             self.root / "assets" / "Audio" / "SE" / stem,
             self.root / "Audio" / "SE" / stem,
         ]
-        for p in candidates:\`),
-			[]byte(\`    def _sound(self, source_path, name, volume=100, pitch=100):
+        for p in candidates:`),
+			[]byte(`    def _sound(self, source_path, name, volume=100, pitch=100):
         if not name:
             return
         stem = Path(name).name
@@ -346,41 +346,41 @@ func patchRuntimeBattleAnimationCatalog(data []byte) ([]byte, error) {
                 self.root / "Audio" / "SE" / item,
                 self.root / "ARCHIVIO_PROGETTO" / "Originali" / "Audio" / "SE" / item,
             ))
-        for p in candidates:\`),
+        for p in candidates:`),
 		},
 		{
-			[]byte(\`    @staticmethod
+			[]byte(`    @staticmethod
     def _timing_value(timing, key, default=None):
         if isinstance(timing, dict):
             return timing.get(key, default)
-        return default\`),
-			[]byte(\`    @staticmethod
+        return default`),
+			[]byte(`    @staticmethod
     def _timing_value(timing, key, default=None):
         if isinstance(timing, dict):
             if key in timing:
                 return timing.get(key, default)
             return timing.get(str(key).lstrip("@"), default)
-        return default\`),
+        return default`),
 		},
 		{
-			[]byte(\`    def play(self, move_id, user_sprite, target_sprite, *, redraw=None) -> bool:
+			[]byte(`    def play(self, move_id, user_sprite, target_sprite, *, redraw=None) -> bool:
         anm_path, anim = self._animation(move_id)
         if not anim or not anim.get("frames"):
             return False
 
-        sheet_path = self._sheet_path(anm_path, anim.get("graphic", ""))\`),
-			[]byte(\`    def play(self, move_id, user_sprite, target_sprite, *, redraw=None, opponent: bool = False) -> bool:
+        sheet_path = self._sheet_path(anm_path, anim.get("graphic", ""))`),
+			[]byte(`    def play(self, move_id, user_sprite, target_sprite, *, redraw=None, opponent: bool = False) -> bool:
         source_path, anim = self._animation(move_id, opponent=opponent)
         if not anim or not anim.get("frames"):
             return False
 
-        sheet_path = self._sheet_path(source_path, anim.get("graphic", ""))\`),
+        sheet_path = self._sheet_path(source_path, anim.get("graphic", ""))`),
 		},
 		{
-			[]byte(\`                        anm_path,
-                        _unwrap_string(self._timing_value(timing, "@name", "")),\`),
-			[]byte(\`                        source_path,
-                        _unwrap_string(self._timing_value(timing, "@name", "")),\`),
+			[]byte(`                        anm_path,
+                        _unwrap_string(self._timing_value(timing, "@name", "")),`),
+			[]byte(`                        source_path,
+                        _unwrap_string(self._timing_value(timing, "@name", "")),`),
 		},
 	}
 	for _, pair := range replacements {
@@ -393,19 +393,19 @@ func patchRuntimeBattleAnimationCatalog(data []byte) ([]byte, error) {
 }
 
 func patchRuntimeBattleAnimationDirection(data []byte) ([]byte, error) {
-	old := []byte(\`                redraw=lambda: self._draw(
+	old := []byte(`                redraw=lambda: self._draw(
                     self._alive(self.state.get("party", [])) or attacker,
                     self._alive(self.enemy_party) or defender,
                     getattr(self, "_last_message", ""),
                 ),
-            )\`)
-	newer := []byte(\`                redraw=lambda: self._draw(
+            )`)
+	newer := []byte(`                redraw=lambda: self._draw(
                     self._alive(self.state.get("party", [])) or attacker,
                     self._alive(self.enemy_party) or defender,
                     getattr(self, "_last_message", ""),
                 ),
                 opponent=attacker not in self.state.get("party", []),
-            )\`)
+            )`)
 	if !bytes.Contains(data, old) {
 		return nil, fmt.Errorf("runtime battle scene: chiamata animazione mossa non trovata")
 	}
