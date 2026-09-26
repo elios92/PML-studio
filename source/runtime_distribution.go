@@ -756,6 +756,37 @@ const runtimePlayerCharsetMethods = `    def _player_metadata_charsets(self) -> 
         name = self._player_charset(movement)
         if name:
             self.player_graphic["character_name"] = name
+
+    def _surf_pattern(self) -> int:
+        """Essentials v20.1 Game_Player#pattern_surf: 4 frame, 15 engine frame ciascuno."""
+        return int((pygame.time.get_ticks() // 375) % 4)
+
+    def _surf_bob_height(self) -> int:
+        if not (self.game_state.get("surfing", False) or self.game_state.get("diving", False)):
+            return 0
+        return 2 if self._surf_pattern() >= 2 else 0
+
+    def _surf_base_frame(self) -> pygame.Surface | None:
+        """Replica Sprite_SurfBase usando gli asset originali base_surf/base_dive."""
+        if self.game_state.get("diving", False):
+            name = "base_dive"
+        elif self.game_state.get("surfing", False):
+            name = "base_surf"
+        else:
+            return None
+        cache_key = "__plm_surf_base__" + name
+        if cache_key not in self.character_cache:
+            path = self.characters.find(name)
+            if path is None:
+                return None
+            self.character_cache[cache_key] = load_image(path)
+        sheet = self.character_cache[cache_key]
+        fw, fh = sheet.get_width() // 4, sheet.get_height() // 4
+        row = {2: 0, 4: 1, 6: 2, 8: 3}.get(int(self.player_graphic.get("direction", 2)), 0)
+        column = self._surf_pattern()
+        frame = pygame.Surface((fw, fh), pygame.SRCALPHA)
+        frame.blit(sheet, (0, 0), (column * fw, row * fh, fw, fh))
+        return frame
 `
 
 const runtimeEssentialsUIPython = `from __future__ import annotations
@@ -1435,6 +1466,51 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 		return fmt.Errorf("runtime map_scene.py: fine movimento giocatore non trovata")
 	}
 	patched = bytes.Replace(patched, oldStopCharset, newStopCharset, 1)
+	oldPlayerDraw := []byte(\`        player_frame = (None if self.game_state.get("transparent_player", False)
+                        else self._character_frame(self.player_graphic))
+        if player_frame:
+            jump_offset = self._player_jump_pixel_offset()
+            player_position = (
+                ox + int(self.player_visual_x * 32) + 16 - player_frame.get_width() // 2,
+                oy + int((self.player_visual_y + 1) * 32) - player_frame.get_height() - jump_offset,
+            )
+        else:
+            player_position = (ox + int(self.player_visual_x * 32),
+                               oy + int(self.player_visual_y * 32) - self._player_jump_pixel_offset())
+        if not self.game_state.get("transparent_player", False):
+            sprites.append((int(self.player_visual_y * 1000), player_frame, player_position))\`)
+	newPlayerDraw := []byte(\`        player_render_graphic = self.player_graphic
+        surf_base = None
+        surf_bob = 0
+        if self.game_state.get("surfing", False) or self.game_state.get("diving", False):
+            player_render_graphic = dict(self.player_graphic)
+            player_render_graphic["pattern"] = self._surf_pattern()
+            surf_base = self._surf_base_frame()
+            surf_bob = self._surf_bob_height()
+        player_frame = (None if self.game_state.get("transparent_player", False)
+                        else self._character_frame(player_render_graphic))
+        jump_offset = self._player_jump_pixel_offset()
+        if player_frame:
+            player_position = (
+                ox + int(self.player_visual_x * 32) + 16 - player_frame.get_width() // 2,
+                oy + int((self.player_visual_y + 1) * 32) - player_frame.get_height() + surf_bob - jump_offset,
+            )
+        else:
+            player_position = (ox + int(self.player_visual_x * 32),
+                               oy + int(self.player_visual_y * 32) + surf_bob - jump_offset)
+        if not self.game_state.get("transparent_player", False):
+            if surf_base:
+                base_position = (
+                    ox + int(self.player_visual_x * 32) + 16 - surf_base.get_width() // 2,
+                    oy + int((self.player_visual_y + 1) * 32) - surf_base.get_height() + 16 + surf_bob - jump_offset,
+                )
+                sprites.append((int(self.player_visual_y * 1000) - 1, surf_base, base_position))
+            sprites.append((int(self.player_visual_y * 1000), player_frame, player_position))\`)
+	if !bytes.Contains(patched, oldPlayerDraw) {
+		return fmt.Errorf("runtime map_scene.py: rendering giocatore non trovato per base Surf/Dive")
+	}
+	patched = bytes.Replace(patched, oldPlayerDraw, newPlayerDraw, 1)
+
 	oldName := []byte("                name = prompt_text(self.graphics, \"Come ti chiami?\", str(self.game_state.get(\"player_name\", \"Alex\")))")
 	newName := []byte("                from game.name_entry_scene import choose_player_name\n                name = choose_player_name(self)")
 	if !bytes.Contains(patched, oldName) {
