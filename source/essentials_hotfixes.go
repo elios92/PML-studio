@@ -60,7 +60,7 @@ func parsePluginMeta(path string) (map[string]string, []string, error) {
 	scanner := bufio.NewScanner(f)
 	var pending string
 	for scanner.Scan() {
-		line := strings.TrimPrefix(scanner.Text(), "﻿")
+		line := strings.TrimPrefix(scanner.Text(), "\uFEFF")
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, "# - ") {
 			if pending != "" {
