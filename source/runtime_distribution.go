@@ -180,7 +180,8 @@ const runtimeEssentialsDebugUISection = `# -------------------------------------
 
 def _font(graphics: Any, root: Path | None, size: int, bold: bool = False) -> pygame.font.Font:
     from game.essentials_ui import essentials_font
-    return essentials_font(root, size, bold=bold)
+    resolved_root = Path(root) if root is not None else Path.cwd()
+    return essentials_font(resolved_root, size, bold=bold)
 
 
 def _debug_background(root: Path | None, size: tuple[int, int]) -> pygame.Surface | None:
@@ -215,9 +216,8 @@ def _wrap(font: pygame.font.Font, text: str, width: int) -> list[str]:
 
 def _debug_skin(root: Path | None) -> pygame.Surface:
     from game.essentials_ui import load_windowskin
-    if root is None:
-        raise RuntimeError("project_root mancante per UI Essentials")
-    return load_windowskin(root, "menu", 0)
+    resolved_root = Path(root) if root is not None else Path.cwd()
+    return load_windowskin(resolved_root, "menu", 0)
 
 
 def prompt_text(graphics: Any, title: str, initial: str = "", numeric: bool = False,
@@ -338,25 +338,33 @@ def show_message(graphics: Any, title: str, message: str, *, project_root: Path 
     from game.essentials_ui import BASE_W, BASE_H, draw_windowskin, present_logical
     font=_font(graphics,project_root,27)
     skin=_debug_skin(project_root)
-    while True:
+    lines=[title] if title else []
+    for paragraph in str(message).split("\n"):
+        lines.extend(_wrap(font,paragraph,442))
+    if not lines:
+        lines=[""]
+    page=0
+    while page < len(lines):
+        advance=False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 raise SystemExit(0)
             if event.type == pygame.KEYDOWN:
-                return
+                advance=True
         logical=pygame.Surface((BASE_W,BASE_H),pygame.SRCALPHA)
         logical.fill((0,0,0,255))
         draw_windowskin(logical,skin,(8,BASE_H-136,BASE_W-16,128))
         base,shadow=(80,80,88),(160,160,168)
         y=BASE_H-120
-        lines=[title] if title else []
-        for paragraph in str(message).split("\n"):
-            lines.extend(_wrap(font,paragraph,442))
-        for line in lines[:3]:
+        for line in lines[page:page+3]:
             sh=font.render(line,True,shadow);fg=font.render(line,True,base)
             logical.blit(sh,(30,y+2));logical.blit(fg,(28,y));y+=32
+        if page+3 < len(lines):
+            pygame.draw.polygon(logical,base,[(486,364),(496,364),(491,371)])
         present_logical(graphics.screen,logical)
         graphics.update()
+        if advance:
+            page += 3
 
 
 `
