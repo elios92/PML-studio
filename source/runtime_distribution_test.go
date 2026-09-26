@@ -24,6 +24,27 @@ func TestNormalizeRuntimeCanonicalPBSPaths(t *testing.T) {
     }
 }
 
+func TestPatchRuntimeFieldMoveConfirmDisplay(t *testing.T) {
+    input := []byte(`def _confirm_inline(scene, title: str, text: str) -> bool:
+    # show_message chiude con un tasto; subito dopo proponiamo la scelta sì/no.
+    _show(scene, title, text)
+    return scene._show_choices(["Sì", "No"]) == 0`)
+    gotBytes, err := patchRuntimeFieldMoveConfirmDisplay(input)
+    if err != nil {
+        t.Fatalf("patch field move confirm failed: %v", err)
+    }
+    got := string(gotBytes)
+    if strings.Contains(got, "_show(scene, title, text)") {
+        t.Fatalf("debug field-move message survived patch: %s", got)
+    }
+    if !strings.Contains(got, "scene._show_dialogue(text)") {
+        t.Fatalf("Essentials dialogue renderer missing after patch: %s", got)
+    }
+    if !strings.Contains(got, `scene._show_choices(["Sì", "No"])`) {
+        t.Fatalf("Yes/No choice missing after patch: %s", got)
+    }
+}
+
 
 func TestPatchRuntimeButtonEventScene(t *testing.T) {
     input := []byte(`        if "pbEventScreen(ButtonEventScene)" in script:
