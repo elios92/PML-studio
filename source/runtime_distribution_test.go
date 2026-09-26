@@ -222,6 +222,21 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
     }
     mapText := string(mapData)
     for _, want := range []string{
+        "def _surf_pattern(self) -> int:",
+        "def _surf_bob_height(self) -> int:",
+        "def _surf_base_frame(self) -> pygame.Surface | None:",
+        "name = \"base_dive\"",
+        "name = \"base_surf\"",
+        "player_render_graphic[\"pattern\"] = self._surf_pattern()",
+        "surf_base = self._surf_base_frame()",
+        "sprites.append((int(self.player_visual_y * 1000) - 1, surf_base, base_position))",
+    } {
+        if !strings.Contains(mapText, want) {
+            t.Fatalf("Surf/Dive base rendering missing %q", want)
+        }
+    }
+
+    for _, want := range []string{
         "show_controls_help(self.graphics, self.project_root)",
         "from game.name_entry_scene import choose_player_name",
         "name = choose_player_name(self)",
