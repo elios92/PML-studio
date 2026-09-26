@@ -297,7 +297,7 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
     debugText := string(debugData)
     for _, want := range []string{
         "from game.essentials_ui import essentials_font",
-        `load_windowskin(root, "menu", 0)`,
+        `load_windowskin(resolved_root, "menu", 0)`,
         "draw_windowskin(logical, skin",
         "present_logical(graphics.screen, logical)",
     } {
