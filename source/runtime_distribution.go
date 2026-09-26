@@ -159,6 +159,21 @@ func normalizeRuntimeCanonicalPBSPaths(data []byte) []byte {
 	return data
 }
 
+func patchRuntimeFieldMoveConfirmDisplay(data []byte) ([]byte, error) {
+	old := []byte(`def _confirm_inline(scene, title: str, text: str) -> bool:
+    # show_message chiude con un tasto; subito dopo proponiamo la scelta sì/no.
+    _show(scene, title, text)
+    return scene._show_choices(["Sì", "No"]) == 0`)
+	newer := []byte(`def _confirm_inline(scene, title: str, text: str) -> bool:
+    # Mantiene il box dialogo Essentials visibile mentre compare la scelta.
+    scene._show_dialogue(text)
+    return scene._show_choices(["Sì", "No"]) == 0`)
+	if !bytes.Contains(data, old) {
+		return nil, fmt.Errorf("runtime field moves: blocco conferma non trovato")
+	}
+	return bytes.Replace(data, old, newer, 1), nil
+}
+
 
 const runtimeControlsHelpPython = `"""PML controls help using the imported Pokémon Essentials UI asset."""
 from __future__ import annotations
@@ -1351,6 +1366,12 @@ func installRuntimeCore(dest, projectName string) (releaseExe, debugExe string, 
 		// Python paths while installing the embedded runtime; do not duplicate PBS.
 		if strings.EqualFold(filepath.Ext(target), ".py") {
 			data = normalizeRuntimeCanonicalPBSPaths(data)
+		}
+		if strings.EqualFold(filepath.ToSlash(archiveName), "game/field_moves.py") {
+			data, err = patchRuntimeFieldMoveConfirmDisplay(data)
+			if err != nil {
+				return "", "", err
+			}
 		}
 		mode := os.FileMode(0644)
 		if strings.EqualFold(filepath.Ext(target), ".exe") {
