@@ -5,6 +5,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -12,7 +13,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"context"
 	"regexp"
 	"strings"
 	"time"
@@ -174,6 +174,271 @@ func patchRuntimeFieldMoveConfirmDisplay(data []byte) ([]byte, error) {
 	return bytes.Replace(data, old, newer, 1), nil
 }
 
+const runtimeEssentialsDebugUISection = `# -----------------------------------------------------------------------------
+# UI comune - resa Pokémon Essentials v20.1.
+# -----------------------------------------------------------------------------
+
+def _font(graphics: Any, root: Path | None, size: int, bold: bool = False) -> pygame.font.Font:
+    from game.essentials_ui import essentials_font
+    resolved_root = Path(root) if root is not None else Path.cwd()
+    return essentials_font(resolved_root, size, bold=bold)
+
+
+def _debug_background(root: Path | None, size: tuple[int, int]) -> pygame.Surface | None:
+    # Il Debug originale usa le finestre/menu di Essentials, non uno sfondo PML.
+    return None
+
+
+def _ui_scale(graphics: Any) -> float:
+    return 1.0
+
+
+def _scaled(graphics: Any, value: int | float) -> int:
+    return max(1, int(round(float(value))))
+
+
+def _wrap(font: pygame.font.Font, text: str, width: int) -> list[str]:
+    words = str(text).replace("\r", "").split()
+    if not words:
+        return [""]
+    lines: list[str] = []
+    current = words[0]
+    for word in words[1:]:
+        trial = current + " " + word
+        if font.size(trial)[0] <= width:
+            current = trial
+        else:
+            lines.append(current)
+            current = word
+    lines.append(current)
+    return lines
+
+
+def _debug_skin(root: Path | None) -> pygame.Surface:
+    from game.essentials_ui import load_windowskin
+    resolved_root = Path(root) if root is not None else Path.cwd()
+    return load_windowskin(resolved_root, "menu", 0)
+
+
+def prompt_text(graphics: Any, title: str, initial: str = "", numeric: bool = False,
+                *, project_root: Path | None = None, allow_negative: bool = True) -> str | None:
+    from game.essentials_ui import BASE_W, BASE_H, draw_windowskin, present_logical
+    value = str(initial)
+    font = _font(graphics, project_root, 27)
+    small = _font(graphics, project_root, 22)
+    skin = _debug_skin(project_root)
+    pygame.key.start_text_input()
+    try:
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    raise SystemExit(0)
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        return None
+                    if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        return value
+                    if event.key == pygame.K_BACKSPACE:
+                        value = value[:-1]
+                elif event.type == pygame.TEXTINPUT:
+                    add = event.text
+                    if not numeric:
+                        value += add
+                    elif add.isdigit() or (allow_negative and add == "-" and not value):
+                        value += add
+            logical = pygame.Surface((BASE_W, BASE_H), pygame.SRCALPHA)
+            logical.fill((0, 0, 0, 255))
+            draw_windowskin(logical, skin, (18, 70, 476, 150))
+            base, shadow = (80, 80, 88), (160, 160, 168)
+            def txt(text, x, y, f=font):
+                sh=f.render(str(text),True,shadow); fg=f.render(str(text),True,base)
+                logical.blit(sh,(x+2,y+2)); logical.blit(fg,(x,y))
+            txt(title, 42, 88)
+            txt(value[-38:] + "|", 42, 132)
+            txt("INVIO: conferma   ESC: annulla", 42, 178, small)
+            present_logical(graphics.screen, logical)
+            graphics.update()
+    finally:
+        pygame.key.stop_text_input()
+
+
+def choose_menu(graphics: Any, title: str, choices: list[str], descriptions: list[str] | None = None,
+                *, project_root: Path | None = None, initial: int = 0) -> int | None:
+    if not choices:
+        return None
+    from game.essentials_ui import BASE_W, BASE_H, draw_windowskin, present_logical
+    index = max(0, min(len(choices) - 1, int(initial)))
+    font = _font(graphics, project_root, 27)
+    small = _font(graphics, project_root, 20)
+    skin = _debug_skin(project_root)
+    rows = 8
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                raise SystemExit(0)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return None
+                if event.key == pygame.K_UP:
+                    index = (index - 1) % len(choices)
+                elif event.key == pygame.K_DOWN:
+                    index = (index + 1) % len(choices)
+                elif event.key == pygame.K_PAGEUP:
+                    index = max(0, index - rows)
+                elif event.key == pygame.K_PAGEDOWN:
+                    index = min(len(choices) - 1, index + rows)
+                elif event.key == pygame.K_HOME:
+                    index = 0
+                elif event.key == pygame.K_END:
+                    index = len(choices) - 1
+                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
+                    return index
+
+        logical = pygame.Surface((BASE_W, BASE_H), pygame.SRCALPHA)
+        logical.fill((0, 0, 0, 255))
+        desc_h = 84 if descriptions else 0
+        list_h = BASE_H - 24 - desc_h
+        draw_windowskin(logical, skin, (8, 8, BASE_W - 16, list_h))
+        if descriptions:
+            draw_windowskin(logical, skin, (8, list_h + 4, BASE_W - 16, desc_h - 4))
+
+        base, shadow = (80, 80, 88), (160, 160, 168)
+        def txt(text, x, y, f=font):
+            text=str(text)
+            sh=f.render(text,True,shadow); fg=f.render(text,True,base)
+            logical.blit(sh,(x+2,y+2)); logical.blit(fg,(x,y))
+
+        txt(title, 32, 20)
+        start=max(0,min(index-rows//2,max(0,len(choices)-rows)))
+        visible=choices[start:start+rows]
+        for row, choice in enumerate(visible):
+            absolute=start+row
+            y=56+row*30
+            if absolute==index:
+                cy=y+12
+                pygame.draw.polygon(logical,base,[(27,cy-5),(37,cy),(27,cy+5)])
+            label=str(choice)
+            while len(label)>4 and font.size(label)[0]>430:
+                label=label[:-2]+"…"
+            txt(label, 44, y)
+        if descriptions and index < len(descriptions):
+            y=list_h+17
+            for line in _wrap(small, descriptions[index], 444)[:2]:
+                txt(line, 28, y, small)
+                y += 24
+        present_logical(graphics.screen, logical)
+        graphics.update()
+
+
+def confirm(graphics: Any, message: str, *, project_root: Path | None = None) -> bool:
+    return choose_menu(graphics, "Conferma", ["Sì", "No"], [message, message], project_root=project_root) == 0
+
+
+def show_message(graphics: Any, title: str, message: str, *, project_root: Path | None = None) -> None:
+    from game.essentials_ui import BASE_W, BASE_H, draw_windowskin, present_logical
+    font=_font(graphics,project_root,27)
+    skin=_debug_skin(project_root)
+    lines=[title] if title else []
+    for paragraph in str(message).split("\n"):
+        lines.extend(_wrap(font,paragraph,442))
+    if not lines:
+        lines=[""]
+    page=0
+    while page < len(lines):
+        advance=False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                raise SystemExit(0)
+            if event.type == pygame.KEYDOWN:
+                advance=True
+        logical=pygame.Surface((BASE_W,BASE_H),pygame.SRCALPHA)
+        logical.fill((0,0,0,255))
+        draw_windowskin(logical,skin,(8,BASE_H-136,BASE_W-16,128))
+        base,shadow=(80,80,88),(160,160,168)
+        y=BASE_H-120
+        for line in lines[page:page+3]:
+            sh=font.render(line,True,shadow);fg=font.render(line,True,base)
+            logical.blit(sh,(30,y+2));logical.blit(fg,(28,y));y+=32
+        if page+3 < len(lines):
+            pygame.draw.polygon(logical,base,[(486,364),(496,364),(491,371)])
+        present_logical(graphics.screen,logical)
+        graphics.update()
+        if advance:
+            page += 3
+
+
+`
+
+const runtimeEssentialsMapSelectMethods = `    def _scale(self) -> float:
+        return 1.0
+
+    def _px(self, value: int | float) -> int:
+        return max(1, int(round(float(value))))
+
+    def _font(self, size: int, *, bold: bool = False) -> pygame.font.Font:
+        from game.essentials_ui import essentials_font
+        return essentials_font(self.project_root, size, bold=bold)
+
+    def _background(self) -> pygame.Surface | None:
+        return None
+
+    @staticmethod
+    def _fit(font: pygame.font.Font, text: str, max_width: int) -> str:
+        label = str(text)
+        if font.size(label)[0] <= max_width:
+            return label
+        while len(label) > 4 and font.size(label + "…")[0] > max_width:
+            label = label[:-1]
+        return label + "…"
+
+    def _visible_layout(self):
+        from game.essentials_ui import BASE_W, BASE_H
+        list_top=52
+        detail_h=74
+        list_bottom=BASE_H-detail_h
+        row_h=30
+        rows=max(5,(list_bottom-list_top)//row_h)
+        start=max(0,min(self.index-rows//2,max(0,len(self.maps)-rows)))
+        return BASE_W,BASE_H,list_top,list_bottom,row_h,rows,start
+
+    def _draw(self) -> None:
+        from game.essentials_ui import BASE_W, BASE_H, draw_windowskin, load_windowskin, present_logical
+        logical=pygame.Surface((BASE_W,BASE_H),pygame.SRCALPHA)
+        logical.fill((0,0,0,255))
+        skin=load_windowskin(self.project_root,"menu",0)
+        width,height,list_top,list_bottom,row_h,rows,start=self._visible_layout()
+        draw_windowskin(logical,skin,(8,8,BASE_W-16,list_bottom-12))
+        draw_windowskin(logical,skin,(8,list_bottom-2,BASE_W-16,BASE_H-list_bottom-6))
+
+        title_font=self._font(27)
+        row_font=self._font(24)
+        small=self._font(18)
+        base,shadow=(80,80,88),(160,160,168)
+        def txt(text,x,y,font):
+            text=str(text)
+            sh=font.render(text,True,shadow);fg=font.render(text,True,base)
+            logical.blit(sh,(x+2,y+2));logical.blit(fg,(x,y))
+
+        txt("Seleziona una mappa",28,20,title_font)
+        visible=self.maps[start:start+rows]
+        for row,(map_id,name,context) in enumerate(visible):
+            absolute=start+row
+            y=list_top+row*row_h
+            if absolute==self.index:
+                cy=y+11
+                pygame.draw.polygon(logical,base,[(26,cy-5),(36,cy),(26,cy+5)])
+            label=self._fit(row_font,f"{map_id:03d}  {name or '(senza nome)'}",300)
+            ctx=self._fit(small,f"[{context}]",125)
+            txt(label,44,y,row_font)
+            txt(ctx,360,y+3,small)
+
+        map_id,name,context=self.maps[self.index]
+        detail=self._fit(small,f"ID {map_id:03d}  •  {name or '(senza nome)'}  •  {context}",440)
+        txt(detail,28,list_bottom+16,small)
+        txt("INVIO: apri   ESC: esci",28,list_bottom+42,small)
+        present_logical(self.graphics.screen,logical)
+
+`
 
 const runtimeControlsHelpPython = `"""PML controls help using the imported Pokémon Essentials UI asset."""
 from __future__ import annotations
@@ -464,6 +729,17 @@ import pygame
 
 BASE_W=512
 BASE_H=384
+
+def essentials_font(root: Path | None, size: int, bold: bool=False) -> pygame.font.Font:
+    root=Path(root) if root is not None else None
+    names=("power green.ttf","power clear bold.ttf","power clear.ttf") if bold else ("power green.ttf","power clear.ttf","power green narrow.ttf")
+    if root is not None:
+        folder=root/"assets"/"Fonts"
+        for name in names:
+            path=folder/name
+            if path.is_file():
+                return pygame.font.Font(str(path),int(size))
+    raise FileNotFoundError("Font Pokémon Essentials mancante in assets/Fonts")
 
 def integer_scale(screen: pygame.Surface) -> int:
     w,h=screen.get_size()
@@ -897,7 +1173,6 @@ const runtimeEssentialsChoiceMethod = `    def _show_choices(self, choices: list
             self.graphics.update()
 `
 
-
 func replaceRuntimePythonSection(data []byte, startMarker, endMarker, replacement string) ([]byte, error) {
 	text := string(data)
 	start := strings.Index(text, startMarker)
@@ -911,7 +1186,6 @@ func replaceRuntimePythonSection(data []byte, startMarker, endMarker, replacemen
 	end := start + len(startMarker) + endRel
 	return []byte(text[:start] + replacement + text[end:]), nil
 }
-
 
 func patchRuntimeButtonEventScene(data []byte) ([]byte, error) {
 	text := string(data)
@@ -935,6 +1209,110 @@ func patchRuntimeButtonEventScene(data []byte) ([]byte, error) {
 		indent + "    show_controls_help(self.graphics, self.project_root)\n" +
 		indent + "    return"
 	return []byte(text[:pos] + replacement + text[end:]), nil
+}
+
+func installRuntimeEssentialsMenuPatch(dest string) error {
+	debugPath := filepath.Join(dest, "game", "debug_menu.py")
+	debugData, err := os.ReadFile(debugPath)
+	if err != nil {
+		return fmt.Errorf("lettura debug_menu.py: %w", err)
+	}
+	debugData, err = replaceRuntimePythonSection(
+		debugData,
+		"# -----------------------------------------------------------------------------\n# UI comune - usa esclusivamente asset/font già presenti nel progetto.",
+		"# -----------------------------------------------------------------------------\n# Selettori dati PBS",
+		runtimeEssentialsDebugUISection,
+	)
+	if err != nil {
+		return fmt.Errorf("conversione Debug UI Essentials: %w", err)
+	}
+	if err := writeBytesAtomic(debugPath, debugData, 0644); err != nil {
+		return err
+	}
+
+	mapSelectPath := filepath.Join(dest, "game", "map_select_scene.py")
+	mapSelect, err := os.ReadFile(mapSelectPath)
+	if err != nil {
+		return fmt.Errorf("lettura map_select_scene.py: %w", err)
+	}
+	mapSelect, err = replaceRuntimePythonSection(
+		mapSelect,
+		"    def _scale(self) -> float:",
+		"    def _move_index(self, delta: int) -> None:",
+		runtimeEssentialsMapSelectMethods,
+	)
+	if err != nil {
+		return fmt.Errorf("conversione selettore mappe Debug Essentials: %w", err)
+	}
+	if err := writeBytesAtomic(mapSelectPath, mapSelect, 0644); err != nil {
+		return err
+	}
+
+	pausePath := filepath.Join(dest, "game", "pause_menu.py")
+	pauseData, err := os.ReadFile(pausePath)
+	if err != nil {
+		return fmt.Errorf("lettura pause_menu.py: %w", err)
+	}
+	oldPauseInit := []byte(`        path=self.root/"assets"/"Fonts"/"power clear.ttf";source=str(path) if path.is_file() else None
+        _,screen_h=self.graphics.screen.get_size();ui_scale=max(1.0,min(1.35,screen_h/768.0))
+        self.font=pygame.font.Font(source,max(29,int(round(29*ui_scale))));self.small=pygame.font.Font(source,max(23,int(round(23*ui_scale))))`)
+	newPauseInit := []byte(`        from game.essentials_ui import essentials_font,load_windowskin
+        _,screen_h=self.graphics.screen.get_size();ui_scale=max(1.0,min(1.35,screen_h/768.0))
+        self.font=essentials_font(self.root,max(29,int(round(29*ui_scale))));self.small=essentials_font(self.root,max(23,int(round(23*ui_scale))))
+        self.menu_skin=load_windowskin(self.root,"menu",0)`)
+	if !bytes.Contains(pauseData, oldPauseInit) {
+		return fmt.Errorf("runtime pause_menu.py: inizializzazione font non trovata")
+	}
+	pauseData = bytes.Replace(pauseData, oldPauseInit, newPauseInit, 1)
+	oldPanel := []byte(`    def _panel(self,rect):pygame.draw.rect(self.graphics.screen,(245,245,244),rect,border_radius=7);pygame.draw.rect(self.graphics.screen,(78,78,98),rect,5,border_radius=7);pygame.draw.rect(self.graphics.screen,(150,150,178),rect.inflate(-10,-10),2,border_radius=4)`)
+	newPanel := []byte(`    def _panel(self,rect):
+        from game.essentials_ui import draw_windowskin
+        draw_windowskin(self.graphics.screen,self.menu_skin,rect)`)
+	if !bytes.Contains(pauseData, oldPanel) {
+		return fmt.Errorf("runtime pause_menu.py: pannello PML non trovato")
+	}
+	pauseData = bytes.Replace(pauseData, oldPanel, newPanel, 1)
+	if err := writeBytesAtomic(pausePath, pauseData, 0644); err != nil {
+		return err
+	}
+
+	// Font fallback generici: un progetto convertito deve usare i font copiati
+	// dall'Essentials originale, mai il font pygame di sistema.
+	fontFiles := []string{"mart_scene.py", "field_moves.py"}
+	for _, name := range fontFiles {
+		path := filepath.Join(dest, "game", name)
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return fmt.Errorf("lettura %s: %w", name, readErr)
+		}
+		if name == "mart_scene.py" {
+			old := []byte(`        self.font = pygame.font.Font(None, max(22, round(self.graphics.screen.get_height() * 0.032)))
+        self.small = pygame.font.Font(None, max(18, round(self.graphics.screen.get_height() * 0.026)))
+        self.big = pygame.font.Font(None, max(30, round(self.graphics.screen.get_height() * 0.044)))`)
+			newer := []byte(`        from game.essentials_ui import essentials_font
+        self.font = essentials_font(self.root, max(22, round(self.graphics.screen.get_height() * 0.032)))
+        self.small = essentials_font(self.root, max(18, round(self.graphics.screen.get_height() * 0.026)))
+        self.big = essentials_font(self.root, max(30, round(self.graphics.screen.get_height() * 0.044)))`)
+			if !bytes.Contains(data, old) {
+				return fmt.Errorf("runtime mart_scene.py: fallback font PML non trovato")
+			}
+			data = bytes.Replace(data, old, newer, 1)
+		} else {
+			old := []byte(`    font = pygame.font.Font(None, 31)
+    small = pygame.font.Font(None, 24)`)
+			newer := []byte(`    from game.essentials_ui import essentials_font
+    font = essentials_font(scene.project_root, 31)
+    small = essentials_font(scene.project_root, 24)`)
+			if !bytes.Contains(data, old) {
+				return fmt.Errorf("runtime field_moves.py: fallback font PML non trovato")
+			}
+			data = bytes.Replace(data, old, newer, 1)
+		}
+		if err := writeBytesAtomic(path, data, 0644); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func convertedEssentialsLanguage(dest string) string {
@@ -970,6 +1348,9 @@ func installRuntimeUICompatibilityPatch(dest string) error {
 	}
 	if err := writeBytesAtomic(filepath.Join(dest, "game", "essentials_title_ui.py"), []byte(runtimeEssentialsTitleUIPython), 0644); err != nil {
 		return fmt.Errorf("installazione UI titolo Essentials: %w", err)
+	}
+	if err := installRuntimeEssentialsMenuPatch(dest); err != nil {
+		return fmt.Errorf("installazione menu/font Essentials: %w", err)
 	}
 
 	mapPath := filepath.Join(dest, "game", "map_scene.py")
@@ -1548,34 +1929,62 @@ func normalizeRuntimePythonSourcesUTF8(root string) error {
 
 func cp1252Rune(b byte) (rune, bool) {
 	switch b {
-	case 0x80: return '€', true
-	case 0x82: return '‚', true
-	case 0x83: return 'ƒ', true
-	case 0x84: return '„', true
-	case 0x85: return '…', true
-	case 0x86: return '†', true
-	case 0x87: return '‡', true
-	case 0x88: return 'ˆ', true
-	case 0x89: return '‰', true
-	case 0x8A: return 'Š', true
-	case 0x8B: return '‹', true
-	case 0x8C: return 'Œ', true
-	case 0x8E: return 'Ž', true
-	case 0x91: return '‘', true
-	case 0x92: return '’', true
-	case 0x93: return '“', true
-	case 0x94: return '”', true
-	case 0x95: return '•', true
-	case 0x96: return '–', true
-	case 0x97: return '—', true
-	case 0x98: return '˜', true
-	case 0x99: return '™', true
-	case 0x9A: return 'š', true
-	case 0x9B: return '›', true
-	case 0x9C: return 'œ', true
-	case 0x9E: return 'ž', true
-	case 0x9F: return 'Ÿ', true
-	default: return 0, false
+	case 0x80:
+		return '€', true
+	case 0x82:
+		return '‚', true
+	case 0x83:
+		return 'ƒ', true
+	case 0x84:
+		return '„', true
+	case 0x85:
+		return '…', true
+	case 0x86:
+		return '†', true
+	case 0x87:
+		return '‡', true
+	case 0x88:
+		return 'ˆ', true
+	case 0x89:
+		return '‰', true
+	case 0x8A:
+		return 'Š', true
+	case 0x8B:
+		return '‹', true
+	case 0x8C:
+		return 'Œ', true
+	case 0x8E:
+		return 'Ž', true
+	case 0x91:
+		return '‘', true
+	case 0x92:
+		return '’', true
+	case 0x93:
+		return '“', true
+	case 0x94:
+		return '”', true
+	case 0x95:
+		return '•', true
+	case 0x96:
+		return '–', true
+	case 0x97:
+		return '—', true
+	case 0x98:
+		return '˜', true
+	case 0x99:
+		return '™', true
+	case 0x9A:
+		return 'š', true
+	case 0x9B:
+		return '›', true
+	case 0x9C:
+		return 'œ', true
+	case 0x9E:
+		return 'ž', true
+	case 0x9F:
+		return 'Ÿ', true
+	default:
+		return 0, false
 	}
 }
 func validateRuntimeInstall(dest string) error {
