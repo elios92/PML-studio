@@ -25,23 +25,51 @@ func TestNormalizeRuntimeCanonicalPBSPaths(t *testing.T) {
 }
 
 func TestPatchRuntimeFieldMoveConfirmDisplay(t *testing.T) {
-    input := []byte(`def _confirm_inline(scene, title: str, text: str) -> bool:
+    input := []byte(`from game.data_registry import registry, split_csv
+
+def _show(scene, title: str, text: str) -> None:
+    from game.debug_menu import show_message
+    show_message(scene.graphics, title, text)
+
+def _confirm_inline(scene, title: str, text: str) -> bool:
     # show_message chiude con un tasto; subito dopo proponiamo la scelta sì/no.
     _show(scene, title, text)
-    return scene._show_choices(["Sì", "No"]) == 0`)
+    return scene._show_choices(["Sì", "No"]) == 0
+
+def _announce(scene, pokemon: dict[str, Any] | None, move_id: str) -> None:
+    name = str((pokemon or {}).get("nickname") or scene.game_state.get("player_name", "Allenatore"))
+    _show(scene, "Mossa da campo", f"{name} usa {move_name(scene, move_id)}!")
+
+def start_surf(scene, pokemon=None):
+    if not _confirm_inline(scene, "Surf", "L'acqua è di un blu intenso...\\nVuoi usare Surf?"):
+        return False`)
     gotBytes, err := patchRuntimeFieldMoveConfirmDisplay(input)
     if err != nil {
         t.Fatalf("patch field move confirm failed: %v", err)
     }
     got := string(gotBytes)
-    if strings.Contains(got, "_show(scene, title, text)") {
-        t.Fatalf("debug field-move message survived patch: %s", got)
+    for _, forbidden := range []string{
+        "from game.debug_menu import show_message",
+        `["Sì", "No"]`,
+        "Mossa da campo",
+        "Allenatore",
+        "L'acqua è di un blu intenso",
+        "Vuoi usare Surf?",
+    } {
+        if strings.Contains(got, forbidden) {
+            t.Fatalf("legacy/translated field-move UI survived patch: %q in %s", forbidden, got)
+        }
     }
-    if !strings.Contains(got, "scene._show_dialogue(text)") {
-        t.Fatalf("Essentials dialogue renderer missing after patch: %s", got)
-    }
-    if !strings.Contains(got, `scene._show_choices(["Sì", "No"])`) {
-        t.Fatalf("Yes/No choice missing after patch: %s", got)
+    for _, want := range []string{
+        "from game.message_system import intl",
+        "scene._show_dialogue(text)",
+        `scene._show_choices([intl("Yes"), intl("No")])`,
+        `intl("{1} used {2}!", name, move_name(scene, move_id))`,
+        `intl("The water is a deep blue color... Would you like to use Surf on it?")`,
+    } {
+        if !strings.Contains(got, want) {
+            t.Fatalf("Essentials field-move presentation missing %q in %s", want, got)
+        }
     }
 }
 
