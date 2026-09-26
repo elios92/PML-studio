@@ -41,7 +41,7 @@ def _announce(scene, pokemon: dict[str, Any] | None, move_id: str) -> None:
     _show(scene, "Mossa da campo", f"{name} usa {move_name(scene, move_id)}!")
 
 def start_surf(scene, pokemon=None):
-    if not _confirm_inline(scene, "Surf", "L'acqua è di un blu intenso...\\nVuoi usare Surf?"):
+    if not _confirm_inline(scene, "Surf", "L'acqua è di un blu intenso...\nVuoi usare Surf?"):
         return False`)
     gotBytes, err := patchRuntimeFieldMoveConfirmDisplay(input)
     if err != nil {
