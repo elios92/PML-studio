@@ -153,6 +153,11 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         "game/options_system.py",
         "game/item_effects.py",
         "game/title_scene.py",
+        "game/debug_menu.py",
+        "game/map_select_scene.py",
+        "game/pause_menu.py",
+        "game/mart_scene.py",
+        "game/field_moves.py",
         "main.py",
         "config/options.json",
     } {
@@ -277,10 +282,78 @@ func TestRuntimeEventUICompatibilityPatch(t *testing.T) {
         "choice 1",
         "def draw_windowskin",
         "pygame.transform.scale",
+        "def essentials_font",
+        "power green.ttf",
     } {
         if !strings.Contains(uiText, want) {
             t.Fatalf("shared Essentials UI renderer missing %q", want)
         }
+    }
+
+    debugData, err := os.ReadFile(filepath.Join(root, "game", "debug_menu.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    debugText := string(debugData)
+    for _, want := range []string{
+        "from game.essentials_ui import essentials_font",
+        `load_windowskin(root, "menu", 0)`,
+        "draw_windowskin(logical, skin",
+        "present_logical(graphics.screen, logical)",
+    } {
+        if !strings.Contains(debugText, want) {
+            t.Fatalf("debug menu did not use Essentials UI: %q", want)
+        }
+    }
+    for _, forbidden := range []string{"ui debug menu.png", "border_radius=_scaled", "pygame.font.Font(None"} {
+        if strings.Contains(debugText, forbidden) {
+            t.Fatalf("legacy PML debug renderer survived: %q", forbidden)
+        }
+    }
+
+    mapSelectData, err := os.ReadFile(filepath.Join(root, "game", "map_select_scene.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    mapSelectText := string(mapSelectData)
+    for _, want := range []string{
+        "essentials_font(self.project_root",
+        `load_windowskin(self.project_root,"menu",0)`,
+        "present_logical(self.graphics.screen,logical)",
+    } {
+        if !strings.Contains(mapSelectText, want) {
+            t.Fatalf("map selector did not use Essentials UI: %q", want)
+        }
+    }
+
+    pauseData, err := os.ReadFile(filepath.Join(root, "game", "pause_menu.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    pauseText := string(pauseData)
+    for _, want := range []string{
+        "essentials_font(self.root",
+        `self.menu_skin=load_windowskin(self.root,"menu",0)`,
+        "draw_windowskin(self.graphics.screen,self.menu_skin,rect)",
+    } {
+        if !strings.Contains(pauseText, want) {
+            t.Fatalf("pause menu did not use Essentials UI: %q", want)
+        }
+    }
+
+    martData, err := os.ReadFile(filepath.Join(root, "game", "mart_scene.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    if strings.Contains(string(martData), "pygame.font.Font(None") {
+        t.Fatal("Poké Mart still uses pygame system fallback font")
+    }
+    fieldData, err := os.ReadFile(filepath.Join(root, "game", "field_moves.py"))
+    if err != nil {
+        t.Fatal(err)
+    }
+    if strings.Contains(string(fieldData), "pygame.font.Font(None") {
+        t.Fatal("field move UI still uses pygame system fallback font")
     }
 
     titleData, err := os.ReadFile(filepath.Join(root, "game", "title_scene.py"))
