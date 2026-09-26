@@ -194,7 +194,7 @@ from game.message_system import intl`),
     _show(scene, "", intl("{1} used {2}!", name, move_name(scene, move_id)))`),
 		},
 		{
-			[]byte(`    if not _confirm_inline(scene, "Surf", "L'acqua è di un blu intenso...\\nVuoi usare Surf?"):
+			[]byte(`    if not _confirm_inline(scene, "Surf", "L'acqua è di un blu intenso...\nVuoi usare Surf?"):
         return False`),
 			[]byte(`    if not _confirm_inline(scene, "Surf", intl("The water is a deep blue color... Would you like to use Surf on it?")):
         return False`),
